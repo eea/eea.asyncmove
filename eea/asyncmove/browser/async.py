@@ -3,6 +3,7 @@ from Products.Five import BrowserView
 from plone.app.async.interfaces import IAsyncService
 from zope.component import getUtility
 from eea.asyncmove import async_move
+from eea.asyncmove.events.async import AsyncMoveSuccess, AsyncMoveFail
 
 
 class MoveAsync(BrowserView):
@@ -24,7 +25,9 @@ class MoveAsync(BrowserView):
         try:
             worker.queueJobInQueue(queue, ('asyncmove',),
                 async_move,
-                self.context, newid
+                self.context, newid=newid,
+                success_event=AsyncMoveSuccess,
+                fail_event=AsyncMoveFail
             )
             transaction.commit()
         except Exception:

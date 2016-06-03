@@ -1,5 +1,6 @@
 import sys
 import warnings
+import logging
 from Acquisition._Acquisition import aq_inner, aq_base
 from Acquisition._Acquisition import aq_parent
 from OFS.CopySupport import cookie_path, CopyError, eNoData, _cb_decode, eInvalid, eNotFound
@@ -8,6 +9,9 @@ from Products.CMFCore.utils import getToolByName
 from ZODB.POSException import ConflictError
 from ZPublisher.HTTPRequest import HTTPRequest
 from ZPublisher.HTTPResponse import HTTPResponse
+from zope import event
+from eea.converter.async import ContextWrapper
+logger = logging.getLogger('eea.asyncmove')
 
 
 def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
@@ -149,5 +153,22 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
     return result
 
 
-def async_move(context, newid):
-    manage_pasteObjects_no_events(context, newid)
+def async_move(context, success_event, fail_event, **kwargs):
+    """ Async job
+    """
+    newid = kwargs.get('newid', '')
+    wrapper = ContextWrapper(context)(**kwargs)
+
+    if not newid:
+        wrapper.error = 'Invalid newid'
+        event.notify(fail_event(wrapper))
+        raise Exception
+
+    try:
+        manage_pasteObjects_no_events(context, newid)
+    except Exception, err:
+        wrapper.error = err
+        event.notify(fail_event(wrapper))
+        raise err
+
+    event.notify(success_event(wrapper))
