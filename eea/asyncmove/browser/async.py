@@ -9,8 +9,14 @@ class MoveAsync(BrowserView):
     """ Ping action executor
     """
 
+    def __init__(self, context, request):
+        super(MoveAsync, self).__init__(context, request)
+        self.context = context
+        self.element = request
+
     def __call__(self):
-        newid = self.request.get('__cp')
+        request = self.context.REQUEST
+        newid = request.get('__cp')
 
         worker = getUtility(IAsyncService)
         queue = worker.getQueues()['']
