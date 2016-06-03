@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<layers>
+  <layer name="eea.asyncmove.layer"
+    interface="eea.asyncmove.browser.interfaces.ILayer" />
+</layers>
