@@ -1,10 +1,6 @@
 ======================
 EEA async move
 ======================
-.. image:: http://ci.eionet.europa.eu/job/eea.asyncmove-www/badge/icon
-  :target: http://ci.eionet.europa.eu/job/eea.asyncmove-www/lastBuild
-.. image:: http://ci.eionet.europa.eu/job/eea.asyncmove-plone4/badge/icon
-  :target: http://ci.eionet.europa.eu/job/eea.asyncmove-plone4/lastBuild
 
 package for moving of large folders
 
