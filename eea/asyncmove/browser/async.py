@@ -16,7 +16,6 @@ class MoveAsync(BrowserView):
         queue = worker.getQueues()['']
 
         try:
-            import pdb; pdb.set_trace()
             worker.queueJobInQueue(queue, ('asyncmove',),
                 async_move,
                 self.context, newid

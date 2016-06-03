@@ -18,7 +18,6 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
     Also sends IObjectCopiedEvent and IObjectClonedEvent
     or IObjectWillBeMovedEvent and IObjectMovedEvent.
     """
-    import pdb; pdb.set_trace()
     if cb_copy_data is not None:
         cp = cb_copy_data
     elif REQUEST is not None and REQUEST.has_key('__cp'):
