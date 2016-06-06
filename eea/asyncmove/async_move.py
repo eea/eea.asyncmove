@@ -1,9 +1,11 @@
 import sys
 import warnings
 import logging
+import transaction
 from Acquisition._Acquisition import aq_inner, aq_base
 from Acquisition._Acquisition import aq_parent
-from OFS.CopySupport import cookie_path, CopyError, eNoData, _cb_decode, eInvalid, eNotFound
+from OFS.CopySupport import CopyError, eNoData, _cb_decode, \
+    eInvalid, eNotFound, sanity_check
 from OFS.Moniker import loadMoniker
 from Products.CMFCore.utils import getToolByName
 from ZODB.POSException import ConflictError
@@ -11,6 +13,7 @@ from ZPublisher.HTTPRequest import HTTPRequest
 from ZPublisher.HTTPResponse import HTTPResponse
 from zope import event
 from eea.converter.async import ContextWrapper
+from Products.Archetypes.interfaces.base import IBaseObject
 logger = logging.getLogger('eea.asyncmove')
 
 
@@ -38,6 +41,8 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
 
     oblist = []
     app = self.getPhysicalRoot()
+    cat = getToolByName(self, 'portal_catalog')
+
     for mdata in mdatas:
         m = loadMoniker(mdata)
         try:
@@ -50,12 +55,13 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
         oblist.append(ob)
 
     result = []
+
     response = HTTPResponse(stdout=sys.stdout)
     env = {'SERVER_NAME':'fake_server',
            'SERVER_PORT':'80',
            'REQUEST_METHOD':'GET'}
     # create fake request needed for reindexObject
-    request = HTTPRequest(sys.stdin, env, response)
+    REQUEST = HTTPRequest(sys.stdin, env, response)
 
     if op == 1:
         # Move operation
@@ -74,9 +80,9 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
             #         message=sys.exc_info()[1],
             #         action='manage_main'))
             #
-            # if not sanity_check(self, ob):
-            #     raise CopyError(
-            #         "This object cannot be pasted into itself")
+            if not sanity_check(self, ob):
+                raise CopyError(
+                    "This object cannot be pasted into itself")
 
             orig_container = aq_parent(aq_inner(ob))
             if aq_base(orig_container) is aq_base(self):
@@ -93,18 +99,17 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
             ob.manage_changeOwnershipType(explicit=1)
 
             try:
-                orig_container_url = '/' + orig_container.absolute_url(1) + '/'
-                cat = getToolByName(orig_container, 'portal_catalog')
-                obj_path = orig_container_url + orig_id
+                obj_path = '/'.join(
+                    orig_container.getPhysicalPath()) + '/' + orig_id
                 try:
-                    cat.uncatalog_object(obj_path)
+                    uncatalog_path = obj_path
+                    cat.uncatalog_object(uncatalog_path)
+                    for obj_id in ob.objectIds():
+                        uncatalog_path = obj_path + '/' + obj_id
+                        cat.uncatalog_object(uncatalog_path)
                 except AttributeError:
-                    warnings.warn("%s could not be found" % obj_path)
-
-                for obj_id in ob.objectIds():
-                    cat.uncatalog_object(obj_path + '/' + obj_id)
+                    warnings.warn("%s could not be found" % uncatalog_path)
                 orig_container._delObject(orig_id, suppress_events=True)
-
             except TypeError:
                 orig_container._delObject(orig_id)
                 warnings.warn(
@@ -123,8 +128,8 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
                     % self.__class__.__name__, DeprecationWarning)
             ob = self._getOb(id)
 
-            # if not ob.get('REQUEST'):
-            #     ob.REQUEST = REQUEST
+            #if not ob.get('REQUEST'):
+            #    ob.REQUEST = REQUEST
             # notify(ObjectMovedEvent(ob, orig_container, orig_id, self, id))
             # notifyContainerModified(orig_container)
             # if aq_base(orig_container) is not aq_base(self):
@@ -135,20 +140,14 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
             ob.manage_changeOwnershipType(explicit=0)
             ob.reindexObject()
             for objs in ob.objectValues():
-                try:
-                    objs.REQUEST = request
-                    objs.reindexObject()
-                    del objs.REQUEST
-                except Exception:
-                    warnings.warn('coulnt reindex obj --> %s', objs.absolute_url(1))
-
-        if REQUEST is not None:
-            REQUEST['RESPONSE'].setCookie('__cp', 'deleted',
-                                          path='%s' % cookie_path(REQUEST),
-                                          expires='Wed, 31-Dec-97 23:59:59 GMT')
-            REQUEST['__cp'] = None
-            return self.manage_main(self, REQUEST, update_menu=1,
-                                    cb_dataValid=0)
+                if IBaseObject.providedBy(objs):
+                    try:
+                        objs.REQUEST = REQUEST
+                        objs.reindexObject()
+                        del objs.REQUEST
+                    except Exception:
+                            warnings.warn(
+                            'couldnt reindex obj --> %s', objs.absolute_url(1))
 
     return result
 
@@ -164,11 +163,15 @@ def async_move(context, success_event, fail_event, **kwargs):
         event.notify(fail_event(wrapper))
         raise Exception
 
+    transaction.begin()
     try:
-        manage_pasteObjects_no_events(context, newid)
+        manage_pasteObjects_no_events(
+            context, cb_copy_data=newid)
+        transaction.commit()
     except Exception, err:
+        transaction.abort()
         wrapper.error = err
         event.notify(fail_event(wrapper))
-        raise err
+        raise Exception
 
     event.notify(success_event(wrapper))

@@ -6,9 +6,9 @@
    <property name="title" i18n:translate="">Async move</property>
    <property name="description" i18n:translate=""></property>
    <property name="url_expr">string:@@async_move:method</property>
-   <property name="available_expr">folder/cb_dataValid</property>
+   <property name="available_expr">folder/@@async_move_view_condition</property>
    <property name="permissions">
-    <element value="Manage portal"/>
+    <element value="Modify portal content"/>
    </property>
    <property name="visible">True</property>
   </object>

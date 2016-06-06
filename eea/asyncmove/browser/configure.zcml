@@ -6,6 +6,14 @@
     <browser:page
         for="*"
         layer=".interfaces.ILayer"
+        name="async_move_view_condition"
+        class=".async.MoveAsyncViewCondition"
+        permission="cmf.ModifyPortalContent"
+    />
+
+    <browser:page
+        for="*"
+        layer=".interfaces.ILayer"
         name="async_move"
         class=".async.MoveAsync"
         permission="cmf.ModifyPortalContent"
