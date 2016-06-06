@@ -4,39 +4,22 @@ EEA async move
 
 package for moving of large folders
 
-Contents
-========
-
 .. contents::
 
-Main features
-=============
-
-1.
-2.
-3.
 
 Install
 =======
 
-- Add ${project} to your eggs section in your buildout and re-run buildout.
+- Add eea.asyncmove to your eggs section in your buildout and re-run buildout.
   You can download a sample buildout from
-  https://github.com/eea/${project}/tree/master/buildouts/plone4
-- Install ${project} within Site Setup > Add-ons
-
-Getting started
-===============
-
-1.
-2.
-3.
+  https://github.com/eea/eea.asyncmove/tree/master/buildouts/plone4
+- Install eea.asyncmove within Site Setup > Add-ons
 
 Dependencies
 ============
 
-1.
-2.
-3.
+1. plone.app.async
+2. eea.converter
 
 Source code
 ===========
