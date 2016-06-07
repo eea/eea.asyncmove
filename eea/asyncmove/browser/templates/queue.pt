@@ -1,0 +1,48 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:metal="http://xml.zope.org/namespaces/metal"
+      xmlns:tal="http://xml.zope.org/namespaces/tal"
+      xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+      xml:lang="en" lang="en"
+      metal:use-macro="context/prefs_main_template/macros/master"
+      i18n:domain="plone">
+
+<body>
+
+<div metal:fill-slot="prefs_configlet_main">
+
+    <script type="text/javascript" tal:content="structure view/js"></script>
+    <style type="text/css">
+    div.job-progress { width:100px; border: solid 1px #000 }
+    div.job-progress span { background: red; }
+    </style>
+
+    <h1 class="documentFirstHeading">Job Queue</h1>
+
+    <p class="discreet">Manage jobs queued for asynchronous processing.</p>
+
+    <form class="enableFormTabbing">
+      <fieldset id="queued-jobs">
+        <legend>Queued (0)</legend>
+        <table class="listing"></table>
+      </fieldset>
+
+      <fieldset id="active-jobs">
+        <legend>Active (0)</legend>
+        <table class="listing"></table>
+      </fieldset>
+            
+      <fieldset id="dead-jobs">
+        <legend>Aborted (0)</legend>
+        <table class="listing"></table>
+      </fieldset>
+
+      <fieldset id="completed-jobs">
+        <legend>Completed (0)</legend>
+        <table class="listing"></table>
+      </fieldset>
+    </form>
+
+</div>
+
+</body>
+</html>

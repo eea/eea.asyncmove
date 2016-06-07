@@ -19,4 +19,21 @@
         permission="cmf.ModifyPortalContent"
     />
 
+    <browser:page
+        for="*"
+        layer=".interfaces.ILayer"
+        name="asyncmovequeue.json"
+        class=".async.MoveAsyncQueueJSON"
+        permission="cmf.ModifyPortalContent"
+    />
+
+    <browser:page
+        for="*"
+        layer=".interfaces.ILayer"
+        name="manage_move_queue"
+        class=".async.MoveAsyncStatus"
+        permission="cmf.ModifyPortalContent"
+        template="templates/queue.pt"
+    />
+
 </configure>
