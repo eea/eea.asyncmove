@@ -206,17 +206,16 @@ def async_move(context, success_event, fail_event, **kwargs):
     if not newid:
         wrapper.error = 'Invalid newid'
         event.notify(fail_event(wrapper))
-        raise Exception
+        raise CopyError(wrapper.error)
 
     transaction.begin()
     try:
         manage_pasteObjects_no_events(context, cb_copy_data=newid)
         transaction.commit()
     except Exception, err:
-        print err
         transaction.abort()
         wrapper.error = err
         event.notify(fail_event(wrapper))
-        raise Exception
+        raise CopyError(wrapper.error)
 
     event.notify(success_event(wrapper))

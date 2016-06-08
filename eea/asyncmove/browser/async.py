@@ -15,7 +15,7 @@ from eea.asyncmove.events.async import AsyncMoveSuccess, AsyncMoveFail
 from OFS.CopySupport import cookie_path, _cb_decode
 from Products.CMFCore.utils import getToolByName
 from persistent.dict import PersistentDict
-
+from OFS.CopySupport import CopyError
 ASYNCMOVE_QUEUE = 'asyncmove'
 
 
@@ -74,8 +74,8 @@ class MoveAsync(BrowserView):
                 self.request['__cp'] = None
 
         except Exception:
-            messages.add(
-                u"Failed to add items to the sync queue", type=u"error")
+            message = u"Failed to add items to the sync queue"
+            messages.add(message, type=u"error")
 
         return self.request.RESPONSE.redirect(self.context.absolute_url())
 
