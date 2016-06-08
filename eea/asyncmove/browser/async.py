@@ -65,13 +65,13 @@ class MoveAsync(BrowserView):
                 u" is completed", type=u"info")
 
             # delete __cp from the request
-            #if self.request is not None:
-            #    self.request['RESPONSE'].setCookie(
-            #        '__cp', 'deleted',
-            #        path='%s' % cookie_path(self.request),
-            #        expires='Wed, 31-Dec-97 23:59:59 GMT'
-            #    )
-            #    self.request['__cp'] = None
+            if self.request is not None:
+                self.request['RESPONSE'].setCookie(
+                    '__cp', 'deleted',
+                    path='%s' % cookie_path(self.request),
+                    expires='Wed, 31-Dec-97 23:59:59 GMT'
+                )
+                self.request['__cp'] = None
 
         except Exception:
             messages.add(
