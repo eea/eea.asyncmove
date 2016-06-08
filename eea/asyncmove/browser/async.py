@@ -10,12 +10,13 @@ from zope.component import getUtility
 from zc.async.utils import custom_repr
 from zc.async.interfaces import ACTIVE
 from ZODB.utils import u64
-from eea.asyncmove.async_move import async_move
+from eea.asyncmove.async_move import async_move, JOB_PROGRESS_DETAILS
 from eea.asyncmove.events.async import AsyncMoveSuccess, AsyncMoveFail
 from OFS.CopySupport import cookie_path, _cb_decode
 from Products.CMFCore.utils import getToolByName
 from persistent.dict import PersistentDict
 from OFS.CopySupport import CopyError
+from plone import api
 ASYNCMOVE_QUEUE = 'asyncmove'
 
 
@@ -44,13 +45,13 @@ class MoveAsync(BrowserView):
         messages = IStatusMessage(self.request)
         worker = getUtility(IAsyncService)
         queue = worker.getQueues()['']
-
         try:
             job = worker.queueJobInQueue(queue, (ASYNCMOVE_QUEUE,),
                 async_move,
                 self.context, newid=newid,
                 success_event=AsyncMoveSuccess,
-                fail_event=AsyncMoveFail
+                fail_event=AsyncMoveFail,
+                email=api.user.get_current().getProperty('email')
             )
             anno = IAnnotations(self.context)
             anno['async_move_job'] = job
@@ -60,6 +61,9 @@ class MoveAsync(BrowserView):
             if not annotation:
                 annotation = PersistentDict()
                 portal_anno['async_move_job'] = annotation
+            job_id = u64(job._p_oid)
+            annotation_job = {}
+            portal_anno['async_move_job'][job_id] = annotation_job
             transaction.commit()
             messages.add(u"Item added to the queue. We notify you when the job"
                 u" is completed", type=u"info")
@@ -123,7 +127,8 @@ class MoveAsyncQueueJSON(JobsJSON):
         async_job_status = portal_anno.get('async_move_job')
         if async_job_status:
             job_id = u64(job._p_oid)
-            return async_job_status.get(job_id)
+            annotation_job = async_job_status.get(job_id)
+            return annotation_job
         return None
 
     def format_title(self, job):
@@ -145,10 +150,9 @@ class MoveAsyncQueueJSON(JobsJSON):
         if not progress:
             return ''
 
-        return """<div style="width:100%%;">
-<div class="progress-bar" style="width:%d%%; background: green; color: #000;
-    text-align: center;">%d%%</div></div>""" % (
-            progress, progress)
+        return """<div>
+<div class="progress-bar" style="width:%d%%;">&nbsp;</div> %d%% %s</div>""" % (
+            progress, progress, self.format_status(job))
 
     def format_subprogress(self, job):
         sub_progresses = []
@@ -164,11 +168,12 @@ class MoveAsyncQueueJSON(JobsJSON):
         for key, progress in progresses.items():
             title = progress['title']
             value = progress['progress'] * 100
+            detail = JOB_PROGRESS_DETAILS.get(value, '')
             sub_progresses.append(
-                """<div id="%s" style="width:100%%;">
+                """<div id="%s">
 <div><strong>%s</strong></div>
-<div class="progress-bar" style="width:%d%%; background: green;">&nbsp;</div> %d%%</div>""" % (
-                key, title, value, value
+<div class="progress-bar" style="width:%d%%;">&nbsp;</div> %d%% %s</div>""" % (
+                key, title, value, value, detail
             ))
 
         return ''.join(sub_progresses)
@@ -178,7 +183,7 @@ class MoveAsyncStatus(BrowserView):
     """ queue status
     """
 
-    def js(self, timeout=5000):
+    def js(self, timeout=10000):
         """Returns the javascript code for async call
         """
         return """
@@ -196,13 +201,15 @@ jQuery(function($) {
       rows.push('<tr><th>Job</th><th>Status</th></tr>');
       $(data).each(function(i, job) {
         row = ['<tr><td><div><strong>' + escape(job.callable) +
-            '</strong></div>'];
-        if (job.progress)
-            row.push(job.progress);
-            if (job.sub_progress)
-                row.push(job.sub_progress);
+          '</strong></div>'];
+        if (job.sub_progress)
+          row.push(job.sub_progress);
         row.push('</td>');
-        row.push('<td>' + job.status);
+        row.push('<td>');
+        if (job.progress)
+          row.push(job.progress);
+        else
+          row.push(job.status);
         if (job.failure)
           row.push('<div>' + job.failure + '</div>')
         row.push('</td>');
@@ -215,7 +222,9 @@ jQuery(function($) {
         index(legend)).html(legend.html().replace('0', data.length));
     };
 
-    $.getJSON('asyncmovequeue.json', function(data) {
+    $.getJSON('asyncmovequeue.json', {
+            'ajax_load': new Date().getTime()
+        }, function(data) {
       $('#queued-jobs').render(data.queued);
       $('#active-jobs').render(data.active);
       $('#dead-jobs').render(data.dead);

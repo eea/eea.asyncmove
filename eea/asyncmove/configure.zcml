@@ -9,6 +9,7 @@
 
   <include package=".browser" />
   <include package=".events" />
+  <include package=".rules" />
   <include package=".upgrades" />
 
 </configure>

@@ -14,3 +14,7 @@ class IAsyncMoveSuccess(IAsyncMoveEvent):
 class IAsyncMoveFail(IAsyncMoveEvent):
     """ Async job for move failed
     """
+
+class IAsyncMoveSaveProgress(IAsyncMoveEvent):
+    """ Async job for save move progress
+    """

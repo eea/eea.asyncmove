@@ -5,7 +5,7 @@ import transaction
 from Acquisition._Acquisition import aq_inner, aq_base
 from Acquisition._Acquisition import aq_parent
 from OFS.CopySupport import CopyError, eNoData, _cb_decode, \
-    eInvalid, eNotFound, sanity_check
+    eInvalid, eNotFound, sanity_check, eNoItemsSpecified
 from OFS.Moniker import loadMoniker
 from Products.CMFCore.utils import getToolByName
 from ZODB.POSException import ConflictError
@@ -15,8 +15,9 @@ from zope import event
 from zope.annotation import IAnnotations
 from eea.converter.async import ContextWrapper
 from Products.Archetypes.interfaces.base import IBaseObject
-from persistent.dict import PersistentDict
 from ZODB.utils import u64
+from App.Dialogs import MessageDialog
+from eea.asyncmove.events.async import AsyncMoveSaveProgress
 logger = logging.getLogger('eea.asyncmove')
 
 
@@ -39,12 +40,7 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
 
     anno = IAnnotations(self)
     job = anno.get('async_move_job')
-
-    portal = getToolByName(self, 'portal_url').getPortalObject()
-    portal_anno = IAnnotations(portal)
-    annotation = portal_anno.get('async_move_job')
     job_id = u64(job._p_oid)
-    annotation_job = annotation[job_id] = PersistentDict()
 
     if cb_copy_data is not None:
         cp = cb_copy_data
@@ -85,15 +81,13 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
     REQUEST = HTTPRequest(sys.stdin, env, response)
 
     steps = oblist and int(100/len(oblist)) or 0
-    annotation_job['sub_progress'] =  {}
-    annotation_job['title'] = "Move below objects to %s" % (
-        self.absolute_url()
-    )
 
-    for o in oblist:
-        annotation_job['sub_progress'][o.getId()] = {}
-        annotation_job['sub_progress'][o.getId()]['progress'] = 0
-        annotation_job['sub_progress'][o.getId()]['title'] = o.Title()
+    event.notify(AsyncMoveSaveProgress(
+        self, operation='initialize', job_id=job_id, oblist_id=[
+            (o.getId(), o.Title()) for o in oblist
+    ]))
+
+    transaction.savepoint(1)
 
     if op == 1:
         # Move operation
@@ -129,7 +123,11 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
             # try to make ownership explicit so that it gets carried
             # along to the new location if needed.
             ob.manage_changeOwnershipType(explicit=1)
-            annotation_job['sub_progress'][o.getId()]['progress'] = .25
+            event.notify(AsyncMoveSaveProgress(
+                self, operation='sub_progress', job_id=job_id,
+                obj_id = o.getId(), progress=.25
+            ))
+            transaction.savepoint(1)
 
             try:
                 obj_path = '/'.join(
@@ -150,7 +148,11 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
                     % orig_container.__class__.__name__,
                     DeprecationWarning)
 
-            annotation_job['sub_progress'][ob.getId()]['progress'] = .50
+            event.notify(AsyncMoveSaveProgress(
+                self, operation='sub_progress', job_id=job_id,
+                obj_id = o.getId(), progress=.50
+            ))
+            transaction.savepoint(1)
 
             ob = aq_base(ob)
             ob._setId(id)
@@ -175,7 +177,11 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
             # try to make ownership implicit if possible
             ob.manage_changeOwnershipType(explicit=0)
 
-            annotation_job['sub_progress'][ob.getId()]['progress'] = .75
+            event.notify(AsyncMoveSaveProgress(
+                self, operation='sub_progress', job_id=job_id,
+                obj_id = ob.getId(), progress=.75
+            ))
+            transaction.savepoint(1)
 
             ob.reindexObject()
             for objs in ob.objectValues():
@@ -188,11 +194,20 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
                             warnings.warn(
                             'couldnt reindex obj --> %s', objs.absolute_url(1))
 
-            annotation_job['sub_progress'][ob.getId()]['progress'] = 1
-            annotation_job['progress'] = steps*(i+1)/100
+            event.notify(AsyncMoveSaveProgress(
+                self, operation='sub_progress', job_id=job_id,
+                obj_id = ob.getId(), progress=1
+            ))
+            event.notify(AsyncMoveSaveProgress(
+                self, operation='progress', job_id=job_id,
+                progress=steps*(i+1)/100
+            ))
+            transaction.savepoint(1)
 
-    annotation_job['progress'] = 1
-
+    event.notify(AsyncMoveSaveProgress(
+        self, operation='progress', job_id=job_id,
+        progress=1
+    ))
     del anno['async_move_job']
     return result
 
@@ -201,21 +216,51 @@ def async_move(context, success_event, fail_event, **kwargs):
     """ Async job
     """
     newid = kwargs.get('newid', '')
-    wrapper = ContextWrapper(context)(**kwargs)
+    email = kwargs.get('email', '')
+    wrapper = None
+
+    anno = IAnnotations(context)
+    job = anno.get('async_move_job')
 
     if not newid:
         wrapper.error = 'Invalid newid'
         event.notify(fail_event(wrapper))
-        raise CopyError(wrapper.error)
+        raise CopyError(eNoItemsSpecified)
 
-    transaction.begin()
+    try:
+        op, mdatas = _cb_decode(newid)
+    except:
+        raise CopyError(eInvalid)
+    oblist = []
+    app = context.getPhysicalRoot()
+
+    for mdata in mdatas:
+        m = loadMoniker(mdata)
+        try:
+            ob = m.bind(app)
+        except ConflictError:
+            raise
+        except:
+            raise CopyError(eNotFound)
+        # self._verifyObjectPaste(ob, validate_src=op+1)
+        oblist.append(ob)
+
+    wrapper = ContextWrapper(context)(
+        folder_move_from=oblist and aq_parent(
+            aq_inner(oblist[0])).absolute_url(),
+        folder_move_to=context.absolute_url(),
+        folder_move_objects=', '.join([ob.getId() for ob in oblist]),
+        asyncmove_email=email,
+    )
     try:
         manage_pasteObjects_no_events(context, cb_copy_data=newid)
-        transaction.commit()
     except Exception, err:
-        transaction.abort()
         wrapper.error = err
         event.notify(fail_event(wrapper))
-        raise CopyError(wrapper.error)
+        raise CopyError(MessageDialog(
+            title='Error',
+            message=err.message,
+            action ='manage_main',
+        ))
 
     event.notify(success_event(wrapper))

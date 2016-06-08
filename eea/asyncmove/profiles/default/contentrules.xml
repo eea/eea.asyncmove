@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<contentrules>
+ <rule name="eea-asyncmove-rule-fail" title="Async move failed" cascading="False"
+    description="Notify the person who requested to move folder and that move failed."
+    enabled="True" event="eea.asyncmove.events.interfaces.IAsyncMoveFail"
+    stop-after="False">
+  <conditions/>
+  <actions>
+   <action type="plone.actions.Mail">
+    <property name="source"/>
+    <property
+       name="message">Our apologies, your request to move ${folder_move_objects} from ${folder_move_from} to ${folder_move_to} failed.
+
+Please try again later at ${folder_move_from}
+
+----------
+This email is auto-generated and delivered to you because a move operation was requested for ${folder_move_from}. If you did not request this then just ignore this email.
+----------</property>
+    <property name="subject">Your move request is FAILED</property>
+    <property name="recipients">${asyncmove_email}</property>
+    <property name="exclude_actor">False</property>
+   </action>
+  </actions>
+ </rule>
+ <rule name="eea-asyncmove-rule-success" title="Async move succeeded" cascading="False"
+    description="Notify the person who requested to move a folder and that move successfully."
+    enabled="True" event="eea.asyncmove.events.interfaces.IAsyncMoveSuccess"
+    stop-after="False">
+  <conditions/>
+  <actions>
+   <action type="plone.actions.Mail">
+    <property name="source"/>
+    <property
+       name="message">Your request to move ${folder_move_objects} from ${folder_move_from} to ${folder_move_to} is ready.
+
+----------
+This email is auto-generated and delivered to you because a move operation was requested for ${folder_move_from}. If you did not request this then just ignore this email.
+----------</property>
+    <property name="subject">Your move request is ready</property>
+    <property name="recipients">${asyncmove_email}</property>
+    <property name="exclude_actor">False</property>
+   </action>
+  </actions>
+ </rule>
+ <assignment name="eea-asyncmove-rule-fail" bubbles="True" enabled="True" location=""/>
+ <assignment name="eea-asyncmove-rule-success" bubbles="True" enabled="True" location=""/>
+</contentrules>

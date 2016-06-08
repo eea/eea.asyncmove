@@ -7,4 +7,9 @@
     handler=".subscribers.configureQueue"
     />
 
+  <subscriber
+    for="eea.asyncmove.events.interfaces.IAsyncMoveSaveProgress"
+    handler=".subscribers.saveJobProgress"
+    />
+
 </configure>

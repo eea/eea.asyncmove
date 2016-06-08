@@ -12,11 +12,18 @@
 
     <script type="text/javascript" tal:content="structure view/js"></script>
     <style type="text/css">
-    div.job-progress { width:100px; border: solid 1px #000 }
-    div.job-progress span { background: red; }
+    div.progress-bar { background: #d0df86; }
+    #active-jobs table,
+    #dead-jobs table,
+    #completed-jobs table,
+    #queued-jobs table{ width: 100%; }
+    #active-jobs table td,
+    #dead-jobs table td,
+    #completed-jobs table td,
+    #queued-jobs table td { vertical-align: middle; }
     </style>
 
-    <h1 class="documentFirstHeading">Job Queue</h1>
+    <h1 class="documentFirstHeading">Async Move Job Queue</h1>
 
     <p class="discreet">Manage jobs queued for asynchronous processing.</p>
 
@@ -30,7 +37,7 @@
         <legend>Active (0)</legend>
         <table class="listing"></table>
       </fieldset>
-            
+
       <fieldset id="dead-jobs">
         <legend>Aborted (0)</legend>
         <table class="listing"></table>

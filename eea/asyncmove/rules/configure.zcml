@@ -1,0 +1,65 @@
+<configure
+  xmlns="http://namespaces.zope.org/zope">
+
+  <include package="plone.app.contentrules" />
+
+  <!-- Custom content-rules events -->
+  <interface
+    interface="eea.asyncmove.events.interfaces.IAsyncMoveFail"
+    type="plone.contentrules.rule.interfaces.IRuleEventType"
+    name="Async Move (fail)"
+    />
+
+  <interface
+    interface="eea.asyncmove.events.interfaces.IAsyncMoveSuccess"
+    type="plone.contentrules.rule.interfaces.IRuleEventType"
+    name="Async Move (success)"
+    />
+
+  <!-- Content rules subscribers -->
+  <subscriber
+    for="eea.asyncmove.events.interfaces.IAsyncMoveFail"
+    handler=".handlers.execute_event"
+    />
+
+  <subscriber
+    for="eea.asyncmove.events.interfaces.IAsyncMoveSuccess"
+    handler=".handlers.execute_event"
+    />
+
+  <!-- Custom context -->
+  <class class="eea.converter.async.ContextWrapper">
+    <implements interface="plone.contentrules.engine.interfaces.IRuleAssignable" />
+  </class>
+
+
+  <!-- Content rules substitutions -->
+  <adapter
+    for="eea.converter.interfaces.IContextWrapper"
+    provides="plone.stringinterp.interfaces.IStringSubstitution"
+    factory=".adapters.FolderMoveFrom"
+    name="folder_move_from"
+    />
+
+  <adapter
+    for="eea.converter.interfaces.IContextWrapper"
+    provides="plone.stringinterp.interfaces.IStringSubstitution"
+    factory=".adapters.FolderMoveTo"
+    name="folder_move_to"
+    />
+
+  <adapter
+    for="eea.converter.interfaces.IContextWrapper"
+    provides="plone.stringinterp.interfaces.IStringSubstitution"
+    factory=".adapters.FolderMoveObjects"
+    name="folder_move_objects"
+    />
+
+  <adapter
+    for="eea.converter.interfaces.IContextWrapper"
+    provides="plone.stringinterp.interfaces.IStringSubstitution"
+    factory=".adapters.FolderMoveEmail"
+    name="asyncmove_email"
+    />
+
+</configure>

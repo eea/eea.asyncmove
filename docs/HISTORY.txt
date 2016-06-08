@@ -4,3 +4,6 @@ Changelog
 0.1-dev - (unreleased)
 ----------------------
 - Initial release
+  [refs #72531 lucas]
+- Add content rules on success and fail
+  [refs #72535 lucas]
