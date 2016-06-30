@@ -29,6 +29,28 @@ JOB_PROGRESS_DETAILS = {
 }
 
 
+def reindex_object(obj, REQUEST, recursive=0):
+    """reindex the given object.
+
+    If 'recursive' is true then also take reindex of all sub-objects.
+    """
+    if IBaseObject.providedBy(obj):
+        try:
+            obj.REQUEST = REQUEST
+            obj.reindexObject()
+            del obj.REQUEST
+        except Exception:
+            warnings.warn(
+            'couldnt reindex obj --> %s', obj.getId())
+            pass
+        
+        if recursive:
+            children = getattr(obj, 'objectValues', lambda :() )()
+            for child in children:
+                reindex_object(child, REQUEST, recursive)
+        
+            
+
 def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
     """Paste previously copied objects into the current object.
     If calling manage_pasteObjects from python code, pass the result of a
@@ -133,10 +155,10 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
                 obj_path = '/'.join(
                     orig_container.getPhysicalPath()) + '/' + orig_id
                 try:
+                    uncatalog_objs = cat(path=obj_path)
                     uncatalog_path = obj_path
-                    cat.uncatalog_object(uncatalog_path)
-                    for obj_id in ob.objectIds():
-                        uncatalog_path = obj_path + '/' + obj_id
+                    for obj_brain in uncatalog_objs:
+                        uncatalog_path = obj_brain.getPath()
                         cat.uncatalog_object(uncatalog_path)
                 except AttributeError:
                     warnings.warn("%s could not be found" % uncatalog_path)
@@ -182,18 +204,9 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
                 obj_id = ob.getId(), progress=.75
             ))
             transaction.savepoint(1)
-
-            ob.reindexObject()
-            for objs in ob.objectValues():
-                if IBaseObject.providedBy(objs):
-                    try:
-                        objs.REQUEST = REQUEST
-                        objs.reindexObject()
-                        del objs.REQUEST
-                    except Exception:
-                            warnings.warn(
-                            'couldnt reindex obj --> %s', objs.absolute_url(1))
-
+            
+            reindex_object(ob, REQUEST, recursive=1)
+            
             event.notify(AsyncMoveSaveProgress(
                 self, operation='sub_progress', job_id=job_id,
                 obj_id = ob.getId(), progress=1
