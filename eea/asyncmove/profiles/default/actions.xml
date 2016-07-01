@@ -13,4 +13,20 @@
    <property name="visible">True</property>
   </object>
  </object>
+ <object name="object_buttons" meta_type="CMF Action Category">
+  <object name="async_move" meta_type="CMF Action" i18n:domain="eea">
+   <property name="title" i18n:translate="">Async move</property>
+   <property name="description" i18n:translate=""/>
+   <property name="url_expr">
+    python:((object.restrictedTraverse('@@plone').isDefaultPageInFolder() or not object.restrictedTraverse('@@plone').isStructuralFolder()) and object.getParentNode().absolute_url() or object_url) + '/@@async_move'
+   </property>
+   <property name="link_target"/>
+   <property name="icon_expr"/>
+   <property name="available_expr">folder/@@async_move_view_condition</property>
+   <property name="permissions">
+    <element value="Modify portal content"/>
+   </property>
+   <property name="visible">True</property>
+  </object>
+ </object>
 </object>

@@ -1,5 +1,4 @@
 import sys
-import warnings
 import logging
 import transaction
 from Acquisition._Acquisition import aq_inner, aq_base
@@ -36,12 +35,12 @@ def reindex_object(obj, REQUEST, recursive=0):
     """
     if IBaseObject.providedBy(obj):
         try:
-            obj.REQUEST = REQUEST
             obj.reindexObject()
-            del obj.REQUEST
-        except Exception:
-            warnings.warn(
-            'couldnt reindex obj --> %s', obj.getId())
+        except:
+            logger.warn(
+                'couldnt reindex obj --> %s',
+                getattr(obj, 'absolute_url', lambda :'None')()
+            )
             pass
         
         if recursive:
@@ -154,6 +153,7 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
             try:
                 obj_path = '/'.join(
                     orig_container.getPhysicalPath()) + '/' + orig_id
+                orig_container._delObject(orig_id, suppress_events=True)
                 try:
                     uncatalog_objs = cat(path=obj_path)
                     uncatalog_path = obj_path
@@ -161,11 +161,10 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
                         uncatalog_path = obj_brain.getPath()
                         cat.uncatalog_object(uncatalog_path)
                 except AttributeError:
-                    warnings.warn("%s could not be found" % uncatalog_path)
-                orig_container._delObject(orig_id, suppress_events=True)
+                    logger.warn("%s could not be found" % uncatalog_path)
             except TypeError:
                 orig_container._delObject(orig_id)
-                warnings.warn(
+                logger.warn(
                     "%s._delObject without suppress_events is discouraged."
                     % orig_container.__class__.__name__,
                     DeprecationWarning)
@@ -183,7 +182,7 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
                 self._setObject(id, ob, set_owner=0, suppress_events=True)
             except TypeError:
                 self._setObject(id, ob, set_owner=0)
-                warnings.warn(
+                logger.warn(
                     "%s._setObject without suppress_events is discouraged."
                     % self.__class__.__name__, DeprecationWarning)
             ob = self._getOb(id)

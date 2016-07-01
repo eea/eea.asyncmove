@@ -4,4 +4,7 @@
  <object name="folder_buttons" meta_type="CMF Action Category">
   <object name="async_move" remove="True"/>
  </object>
+ <object name="object_buttons" meta_type="CMF Action Category">
+  <object name="async_move" remove="True"/>
+ </object>
 </object>
