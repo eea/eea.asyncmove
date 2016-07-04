@@ -221,6 +221,7 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
         progress=1
     ))
     del anno['async_move_job']
+    transaction.savepoint(1)
     return result
 
 
@@ -268,6 +269,7 @@ def async_move(context, success_event, fail_event, **kwargs):
         manage_pasteObjects_no_events(context, cb_copy_data=newid)
     except Exception, err:
         wrapper.error = err.message
+        
         event.notify(fail_event(wrapper))
         raise CopyError(MessageDialog(
             title='Error',

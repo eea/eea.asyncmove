@@ -36,6 +36,7 @@ This email is auto-generated and delivered to you because a move operation was r
     <property
        name="message">Your request to move ${folder_move_objects} from ${folder_move_from} to ${folder_move_to} is ready.
 
+Wait until the async job will saved
 ----------
 This email is auto-generated and delivered to you because a move operation was requested for ${folder_move_from}. If you did not request this then just ignore this email.
 ----------</property>
