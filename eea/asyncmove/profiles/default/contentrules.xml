@@ -13,6 +13,9 @@
 
 Please try again later at ${folder_move_from}
 
+Trace back:
+${asyncmove_error}
+
 ----------
 This email is auto-generated and delivered to you because a move operation was requested for ${folder_move_from}. If you did not request this then just ignore this email.
 ----------</property>

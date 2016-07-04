@@ -45,3 +45,15 @@ class FolderMoveEmail(BaseSubstitution):
         """ Safe call
         """
         return getattr(self.context, 'asyncmove_email', '')
+
+
+class AsyncMoveError(BaseSubstitution):
+    """ error message substitution
+    """
+    category = u'AsyncMove'
+    description = u'Error message'
+
+    def safe_call(self):
+        """ Safe call
+        """
+        return getattr(self.context, 'error', '')

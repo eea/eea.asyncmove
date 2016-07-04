@@ -28,7 +28,7 @@ JOB_PROGRESS_DETAILS = {
 }
 
 
-def reindex_object(obj, REQUEST, recursive=0):
+def reindex_object(obj, recursive=0):
     """reindex the given object.
 
     If 'recursive' is true then also take reindex of all sub-objects.
@@ -46,7 +46,7 @@ def reindex_object(obj, REQUEST, recursive=0):
         if recursive:
             children = getattr(obj, 'objectValues', lambda :() )()
             for child in children:
-                reindex_object(child, REQUEST, recursive)
+                reindex_object(child, recursive)
         
             
 
@@ -204,7 +204,7 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
             ))
             transaction.savepoint(1)
             
-            reindex_object(ob, REQUEST, recursive=1)
+            reindex_object(ob, recursive=1)
             
             event.notify(AsyncMoveSaveProgress(
                 self, operation='sub_progress', job_id=job_id,
@@ -267,7 +267,7 @@ def async_move(context, success_event, fail_event, **kwargs):
     try:
         manage_pasteObjects_no_events(context, cb_copy_data=newid)
     except Exception, err:
-        wrapper.error = err
+        wrapper.error = err.message
         event.notify(fail_event(wrapper))
         raise CopyError(MessageDialog(
             title='Error',
