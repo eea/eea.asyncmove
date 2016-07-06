@@ -57,3 +57,15 @@ class AsyncMoveError(BaseSubstitution):
         """ Safe call
         """
         return getattr(self.context, 'error', '')
+
+
+class AsyncMoveJobID(BaseSubstitution):
+    """ job id substitution
+    """
+    category = u'AsyncMove'
+    description = u'Job ID'
+
+    def safe_call(self):
+        """ Safe call
+        """
+        return getattr(self.context, 'job_id', '')

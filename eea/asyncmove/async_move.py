@@ -234,7 +234,8 @@ def async_move(context, success_event, fail_event, **kwargs):
 
     anno = IAnnotations(context)
     job = anno.get('async_move_job')
-
+    job_id = u64(job._p_oid)
+    
     if not newid:
         wrapper.error = 'Invalid newid'
         event.notify(fail_event(wrapper))
@@ -269,6 +270,7 @@ def async_move(context, success_event, fail_event, **kwargs):
         manage_pasteObjects_no_events(context, cb_copy_data=newid)
     except Exception, err:
         wrapper.error = err.message
+        wrapper.job_id = job_id
         
         event.notify(fail_event(wrapper))
         raise CopyError(MessageDialog(

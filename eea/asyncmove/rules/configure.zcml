@@ -68,5 +68,12 @@
     factory=".adapters.AsyncMoveError"
     name="asyncmove_error"
     />
+  
+  <adapter
+    for="eea.converter.interfaces.IContextWrapper"
+    provides="plone.stringinterp.interfaces.IStringSubstitution"
+    factory=".adapters.AsyncMoveJobID"
+    name="asyncmove_jobid"
+    />
 
 </configure>
