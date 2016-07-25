@@ -108,8 +108,6 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
         self, operation='initialize', job_id=job_id, oblist_id=[
             (o.getId(), o.Title()) for o in oblist
     ]))
-    
-    transaction.savepoint(1)
 
     if op == 1:
         # Move operation
@@ -130,11 +128,11 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
             # try to make ownership explicit so that it gets carried
             # along to the new location if needed.
             ob.manage_changeOwnershipType(explicit=1)
+            
             event.notify(AsyncMoveSaveProgress(
                 self, operation='sub_progress', job_id=job_id,
-                obj_id = o.getId(), progress=.25
+                obj_id = ob.getId(), progress=.25
             ))
-            transaction.savepoint(1)
 
             try:
                 obj_path = '/'.join(
@@ -157,10 +155,9 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
 
             event.notify(AsyncMoveSaveProgress(
                 self, operation='sub_progress', job_id=job_id,
-                obj_id = o.getId(), progress=.50
+                obj_id = ob.getId(), progress=.50
             ))
-            transaction.savepoint(1)
-
+    
             ob = aq_base(ob)
             ob._setId(id)
 
@@ -175,7 +172,7 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
 
             if not ob.get('REQUEST'):
                 ob.REQUEST = REQUEST
-
+            
             ob._postCopy(self, op=1)
             # try to make ownership implicit if possible
             ob.manage_changeOwnershipType(explicit=0)
@@ -184,8 +181,6 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
                 self, operation='sub_progress', job_id=job_id,
                 obj_id = ob.getId(), progress=.75
             ))
-            
-            transaction.savepoint(1)
             
             reindex_object(ob, recursive=1)
             
@@ -197,21 +192,19 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
                 self, operation='progress', job_id=job_id,
                 progress=steps*(i+1)/100
             ))
-            transaction.savepoint(1)
 
     event.notify(AsyncMoveSaveProgress(
         self, operation='progress', job_id=job_id,
         progress=1
     ))
     del anno['async_move_job']
-    transaction.savepoint(1)
+    
     return result
 
 
 def async_move(context, success_event, fail_event, **kwargs):
     """ Async job
     """
-    
     newid = kwargs.get('newid', '')
     email = kwargs.get('email', '')
     
