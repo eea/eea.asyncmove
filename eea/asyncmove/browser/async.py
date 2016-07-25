@@ -41,10 +41,11 @@ class MoveAsync(BrowserView):
 
     def __call__(self):
         newid = self.request.get('__cp')
-
+        
         messages = IStatusMessage(self.request)
         worker = getUtility(IAsyncService)
         queue = worker.getQueues()['']
+        
         try:
             job = worker.queueJobInQueue(queue, (ASYNCMOVE_QUEUE,),
                 async_move,
@@ -64,7 +65,7 @@ class MoveAsync(BrowserView):
             job_id = u64(job._p_oid)
             annotation_job = {}
             portal_anno['async_move_job'][job_id] = annotation_job
-            transaction.commit()
+            
             messages.add(u"Item added to the queue. We notify you when the job"
                 u" is completed", type=u"info")
 

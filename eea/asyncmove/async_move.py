@@ -62,7 +62,15 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
     anno = IAnnotations(self)
     job = anno.get('async_move_job')
     job_id = u64(job._p_oid)
-
+    
+    if not REQUEST:
+        # Create a request to work with
+        response = HTTPResponse(stdout=sys.stdout)
+        env = {'SERVER_NAME':'fake_server',
+               'SERVER_PORT':'80',
+               'REQUEST_METHOD':'GET'}
+        REQUEST = HTTPRequest(sys.stdin, env, response) 
+        
     if cb_copy_data is not None:
         cp = cb_copy_data
     elif REQUEST is not None and REQUEST.has_key('__cp'):
@@ -93,40 +101,21 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
         oblist.append(ob)
 
     result = []
-
-    response = HTTPResponse(stdout=sys.stdout)
-    env = {'SERVER_NAME':'fake_server',
-           'SERVER_PORT':'80',
-           'REQUEST_METHOD':'GET'}
-    # create fake request needed for reindexObject
-    REQUEST = HTTPRequest(sys.stdin, env, response)
-
+    
     steps = oblist and int(100/len(oblist)) or 0
-
+    
     event.notify(AsyncMoveSaveProgress(
         self, operation='initialize', job_id=job_id, oblist_id=[
             (o.getId(), o.Title()) for o in oblist
     ]))
-
+    
     transaction.savepoint(1)
 
     if op == 1:
         # Move operation
         for i, ob in enumerate(oblist):
             orig_id = ob.getId()
-            # if not ob.cb_isMoveable():
-            #     raise CopyError(eNotSupported % escape(orig_id))
 
-            # try:
-            #     ob._notifyOfCopyTo(self, op=1)
-            # except ConflictError:
-            #     raise
-            # except:
-            #     raise CopyError(MessageDialog(
-            #         title="Move Error",
-            #         message=sys.exc_info()[1],
-            #         action='manage_main'))
-            #
             if not sanity_check(self, ob):
                 raise CopyError(
                     "This object cannot be pasted into itself")
@@ -137,10 +126,7 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
             else:
                 id = self._get_id(orig_id)
             result.append({'id': orig_id, 'new_id': id})
-
-            # notify(ObjectWillBeMovedEvent(ob, orig_container, orig_id,
-            #                               self, id))
-
+            
             # try to make ownership explicit so that it gets carried
             # along to the new location if needed.
             ob.manage_changeOwnershipType(explicit=1)
@@ -187,12 +173,8 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
                     % self.__class__.__name__, DeprecationWarning)
             ob = self._getOb(id)
 
-            #if not ob.get('REQUEST'):
-            #    ob.REQUEST = REQUEST
-            # notify(ObjectMovedEvent(ob, orig_container, orig_id, self, id))
-            # notifyContainerModified(orig_container)
-            # if aq_base(orig_container) is not aq_base(self):
-            #     notifyContainerModified(self)
+            if not ob.get('REQUEST'):
+                ob.REQUEST = REQUEST
 
             ob._postCopy(self, op=1)
             # try to make ownership implicit if possible
@@ -202,6 +184,7 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
                 self, operation='sub_progress', job_id=job_id,
                 obj_id = ob.getId(), progress=.75
             ))
+            
             transaction.savepoint(1)
             
             reindex_object(ob, recursive=1)
@@ -228,8 +211,10 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
 def async_move(context, success_event, fail_event, **kwargs):
     """ Async job
     """
+    
     newid = kwargs.get('newid', '')
     email = kwargs.get('email', '')
+    
     wrapper = None
 
     anno = IAnnotations(context)
@@ -256,7 +241,7 @@ def async_move(context, success_event, fail_event, **kwargs):
             raise
         except:
             raise CopyError(eNotFound)
-        # self._verifyObjectPaste(ob, validate_src=op+1)
+            
         oblist.append(ob)
 
     wrapper = ContextWrapper(context)(
@@ -266,8 +251,11 @@ def async_move(context, success_event, fail_event, **kwargs):
         folder_move_objects=', '.join([ob.getId() for ob in oblist]),
         asyncmove_email=email,
     )
+            
     try:
-        manage_pasteObjects_no_events(context, cb_copy_data=newid)
+        manage_pasteObjects_no_events(
+            context, cb_copy_data=newid
+        )
     except Exception, err:
         wrapper.error = err.message
         wrapper.job_id = job_id
