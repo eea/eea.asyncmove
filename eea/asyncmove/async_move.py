@@ -28,13 +28,15 @@ JOB_PROGRESS_DETAILS = {
 }
 
 
-def reindex_object(obj, recursive=0):
+def reindex_object(obj, recursive=0, REQUEST=None):
     """reindex the given object.
 
     If 'recursive' is true then also take reindex of all sub-objects.
     """
     if IBaseObject.providedBy(obj):
         try:
+            if not obj.get('REQUEST'):
+                obj.REQUEST = REQUEST
             obj.reindexObject()
         except:
             logger.warn(
@@ -46,7 +48,7 @@ def reindex_object(obj, recursive=0):
         if recursive:
             children = getattr(obj, 'objectValues', lambda :() )()
             for child in children:
-                reindex_object(child, recursive)
+                reindex_object(child, recursive, REQUEST)
         
             
 
@@ -182,7 +184,7 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
                 obj_id = ob.getId(), progress=.75
             ))
             
-            reindex_object(ob, recursive=1)
+            reindex_object(ob, recursive=1, REQUEST=REQUEST)
             
             event.notify(AsyncMoveSaveProgress(
                 self, operation='sub_progress', job_id=job_id,
