@@ -1,0 +1,13 @@
+.*.cfg
+src
+parts
+*eggs
+*-dev.yml
+bootstrap.*
+bin
+lib*
+uuid.txt
+secret.cfg
+include
+local/
+var/

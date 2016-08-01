@@ -26,6 +26,7 @@ setup(name='eea.asyncmove',
       install_requires=[
           'setuptools',
           # -*- Extra requirements: -*-
+          'plone.api',
           'plone.app.async',
           'eea.converter'
       ],
