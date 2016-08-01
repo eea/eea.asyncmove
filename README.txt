@@ -19,7 +19,6 @@ Dependencies
 ============
 
 1. plone.app.async
-2. eea.converter
 
 Source code
 ===========

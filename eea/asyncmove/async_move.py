@@ -12,7 +12,7 @@ from ZPublisher.HTTPRequest import HTTPRequest
 from ZPublisher.HTTPResponse import HTTPResponse
 from zope import event
 from zope.annotation import IAnnotations
-from eea.converter.async import ContextWrapper
+from eea.asyncmove.async import ContextWrapper
 from Products.Archetypes.interfaces.base import IBaseObject
 from ZODB.utils import u64
 from App.Dialogs import MessageDialog
@@ -44,13 +44,13 @@ def reindex_object(obj, recursive=0, REQUEST=None):
                 getattr(obj, 'absolute_url', lambda :'None')()
             )
             pass
-        
+
         if recursive:
             children = getattr(obj, 'objectValues', lambda :() )()
             for child in children:
                 reindex_object(child, recursive, REQUEST)
-        
-            
+
+
 
 def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
     """Paste previously copied objects into the current object.
@@ -64,15 +64,15 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
     anno = IAnnotations(self)
     job = anno.get('async_move_job')
     job_id = u64(job._p_oid)
-    
+
     if not REQUEST:
         # Create a request to work with
         response = HTTPResponse(stdout=sys.stdout)
         env = {'SERVER_NAME':'fake_server',
                'SERVER_PORT':'80',
                'REQUEST_METHOD':'GET'}
-        REQUEST = HTTPRequest(sys.stdin, env, response) 
-        
+        REQUEST = HTTPRequest(sys.stdin, env, response)
+
     if cb_copy_data is not None:
         cp = cb_copy_data
     elif REQUEST is not None and REQUEST.has_key('__cp'):
@@ -103,9 +103,9 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
         oblist.append(ob)
 
     result = []
-    
+
     steps = oblist and int(100/len(oblist)) or 0
-    
+
     event.notify(AsyncMoveSaveProgress(
         self, operation='initialize', job_id=job_id, oblist_id=[
             (o.getId(), o.Title()) for o in oblist
@@ -126,11 +126,11 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
             else:
                 id = self._get_id(orig_id)
             result.append({'id': orig_id, 'new_id': id})
-            
+
             # try to make ownership explicit so that it gets carried
             # along to the new location if needed.
             ob.manage_changeOwnershipType(explicit=1)
-            
+
             event.notify(AsyncMoveSaveProgress(
                 self, operation='sub_progress', job_id=job_id,
                 obj_id = ob.getId(), progress=.25
@@ -159,7 +159,7 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
                 self, operation='sub_progress', job_id=job_id,
                 obj_id = ob.getId(), progress=.50
             ))
-    
+
             ob = aq_base(ob)
             ob._setId(id)
 
@@ -174,7 +174,7 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
 
             if not ob.get('REQUEST'):
                 ob.REQUEST = REQUEST
-            
+
             ob._postCopy(self, op=1)
             # try to make ownership implicit if possible
             ob.manage_changeOwnershipType(explicit=0)
@@ -183,9 +183,9 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
                 self, operation='sub_progress', job_id=job_id,
                 obj_id = ob.getId(), progress=.75
             ))
-            
+
             reindex_object(ob, recursive=1, REQUEST=REQUEST)
-            
+
             event.notify(AsyncMoveSaveProgress(
                 self, operation='sub_progress', job_id=job_id,
                 obj_id = ob.getId(), progress=1
@@ -200,7 +200,7 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
         progress=1
     ))
     del anno['async_move_job']
-    
+
     return result
 
 
@@ -209,13 +209,13 @@ def async_move(context, success_event, fail_event, **kwargs):
     """
     newid = kwargs.get('newid', '')
     email = kwargs.get('email', '')
-    
+
     wrapper = None
 
     anno = IAnnotations(context)
     job = anno.get('async_move_job')
     job_id = u64(job._p_oid)
-    
+
     if not newid:
         wrapper.error = 'Invalid newid'
         event.notify(fail_event(wrapper))
@@ -236,7 +236,7 @@ def async_move(context, success_event, fail_event, **kwargs):
             raise
         except:
             raise CopyError(eNotFound)
-            
+
         oblist.append(ob)
 
     wrapper = ContextWrapper(context)(
@@ -246,7 +246,7 @@ def async_move(context, success_event, fail_event, **kwargs):
         folder_move_objects=', '.join([ob.getId() for ob in oblist]),
         asyncmove_email=email,
     )
-            
+
     try:
         manage_pasteObjects_no_events(
             context, cb_copy_data=newid
@@ -254,7 +254,7 @@ def async_move(context, success_event, fail_event, **kwargs):
     except Exception, err:
         wrapper.error = err.message
         wrapper.job_id = job_id
-        
+
         event.notify(fail_event(wrapper))
         raise CopyError(MessageDialog(
             title='Error',
