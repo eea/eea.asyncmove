@@ -6,19 +6,26 @@
     <browser:page
         for="*"
         layer=".interfaces.ILayer"
-        name="async_move_view_condition"
-        class=".async.MoveAsyncViewCondition"
-        permission="cmf.ModifyPortalContent"
-    />
-
-    <browser:page
-        for="*"
-        layer=".interfaces.ILayer"
         name="async_move"
         class=".async.MoveAsync"
         permission="cmf.ModifyPortalContent"
     />
-
+    
+     <browser:page
+        for="*"
+        layer=".interfaces.ILayer"
+        name="async_move_confirmation"
+        class=".async.MoveAsyncConfirmation"
+        permission="cmf.ModifyPortalContent"
+        template="templates/paste_confirmation.pt"
+    />
+    
+    <browser:resource
+        name="eea.async_move.js"
+        file="./js/view.js"
+        layer=".interfaces.ILayer"
+    />
+    
     <browser:page
         for="*"
         layer=".interfaces.ILayer"

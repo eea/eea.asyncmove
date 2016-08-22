@@ -1,11 +1,13 @@
 import sys
 import logging
 import transaction
+from cgi import escape
 from Acquisition._Acquisition import aq_inner, aq_base
 from Acquisition._Acquisition import aq_parent
 from OFS.CopySupport import CopyError, eNoData, _cb_decode, \
-    eInvalid, eNotFound, sanity_check, eNoItemsSpecified
+    eInvalid, eNotFound, sanity_check, eNoItemsSpecified, eNotSupported
 from OFS.Moniker import loadMoniker
+from OFS.subscribers import compatibilityCall
 from Products.CMFCore.utils import getToolByName
 from ZODB.POSException import ConflictError
 from ZPublisher.HTTPRequest import HTTPRequest
@@ -49,7 +51,6 @@ def reindex_object(obj, recursive=0, REQUEST=None):
             children = getattr(obj, 'objectValues', lambda :() )()
             for child in children:
                 reindex_object(child, recursive, REQUEST)
-
 
 
 def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
@@ -110,6 +111,52 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
         self, operation='initialize', job_id=job_id, oblist_id=[
             (o.getId(), o.Title()) for o in oblist
     ]))
+    
+    if op == 0:
+        # Copy operation
+        for i, ob in enumerate(oblist):
+            orig_id = ob.getId()
+            if not ob.cb_isCopyable():
+                raise CopyError(eNotSupported % escape(orig_id))
+            
+            id = self._get_id(orig_id)
+            result.append({'id': orig_id, 'new_id': id})
+            
+            event.notify(AsyncMoveSaveProgress(
+                self, operation='sub_progress', job_id=job_id,
+                obj_id = ob.getId(), progress=.25
+            ))
+            
+            orig_ob = ob
+            ob = ob._getCopy(self)
+            ob._setId(id)
+            
+            event.notify(AsyncMoveSaveProgress(
+                self, operation='sub_progress', job_id=job_id,
+                obj_id = ob.getId(), progress=.50
+            ))
+            
+            self._setObject(id, ob)
+            ob = self._getOb(id)
+            ob.wl_clearLocks()
+            
+            event.notify(AsyncMoveSaveProgress(
+                self, operation='sub_progress', job_id=job_id,
+                obj_id = ob.getId(), progress=.75
+            ))
+            
+            ob._postCopy(self, op=0)
+
+            compatibilityCall('manage_afterClone', ob, ob)
+            
+            event.notify(AsyncMoveSaveProgress(
+                self, operation='sub_progress', job_id=job_id,
+                obj_id = ob.getId(), progress=1
+            ))
+            event.notify(AsyncMoveSaveProgress(
+                self, operation='progress', job_id=job_id,
+                progress=steps*(i+1)/100
+            ))
 
     if op == 1:
         # Move operation

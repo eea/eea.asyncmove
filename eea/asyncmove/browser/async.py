@@ -1,5 +1,6 @@
 import transaction
 import simplejson as json
+from OFS.Moniker import loadMoniker
 from Products.Five import BrowserView
 from Products.statusmessages.interfaces import IStatusMessage
 from plone.app.async.interfaces import IAsyncService
@@ -10,31 +11,51 @@ from zope.component import getUtility
 from zc.async.utils import custom_repr
 from zc.async.interfaces import ACTIVE
 from ZODB.utils import u64
+from ZODB.POSException import ConflictError
 from eea.asyncmove.async_move import async_move, JOB_PROGRESS_DETAILS
 from eea.asyncmove.events.async import AsyncMoveSuccess, AsyncMoveFail
-from OFS.CopySupport import cookie_path, _cb_decode
+from OFS.CopySupport import cookie_path, _cb_decode, CopyError, \
+     eInvalid, eNotFound, eNoItemsSpecified
 from Products.CMFCore.utils import getToolByName
 from persistent.dict import PersistentDict
-from OFS.CopySupport import CopyError
 from plone import api
 ASYNCMOVE_QUEUE = 'asyncmove'
 
 
-class MoveAsyncViewCondition(BrowserView):
-    """ condition to view async move button
+class MoveAsyncConfirmation(BrowserView):
+    """ action confirmation
     """
-
-    def __call__(self):
-        cp = self.request.get('__cp')
-
+    
+    def cp_info(self):
+        """ get info of files to paste
+        """
+        
+        newid = self.request.get('__cp')
+        
+        if not newid:
+            raise CopyError(eNoItemsSpecified)
+    
         try:
-            op, mdatas = _cb_decode(cp)
+            op, mdatas = _cb_decode(newid)
         except:
-            return 0
-
-        return op == 1 and 1 or 0
-
-
+            raise CopyError(eInvalid)
+            
+        oblist = []
+        app = self.context.getPhysicalRoot()
+    
+        for mdata in mdatas:
+            m = loadMoniker(mdata)
+            try:
+                ob = m.bind(app)
+            except ConflictError:
+                raise
+            except:
+                raise CopyError(eNotFound)
+    
+            oblist.append(ob)
+        
+        return oblist
+            
 class MoveAsync(BrowserView):
     """ Ping action executor
     """
@@ -45,7 +66,6 @@ class MoveAsync(BrowserView):
         messages = IStatusMessage(self.request)
         worker = getUtility(IAsyncService)
         queue = worker.getQueues()['']
-        
         try:
             job = worker.queueJobInQueue(queue, (ASYNCMOVE_QUEUE,),
                 async_move,
