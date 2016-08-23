@@ -6,7 +6,7 @@
    <property name="title" i18n:translate="">Paste (async)</property>
    <property name="description" i18n:translate=""></property>
    <property name="url_expr">string:@@async_move:method</property>
-   <property name="available_expr">folder/@@async_move_view_condition</property>
+   <property name="available_expr">folder/cb_dataValid|nothing</property>
    <property name="permissions">
     <element value="Modify portal content"/>
    </property>
@@ -22,7 +22,7 @@
    </property>
    <property name="link_target"/>
    <property name="icon_expr"/>
-   <property name="available_expr">folder/@@async_move_view_condition</property>
+   <property name="available_expr">folder/cb_dataValid|nothing</property>
    <property name="permissions">
     <element value="Modify portal content"/>
    </property>
