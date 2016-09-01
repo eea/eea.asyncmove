@@ -1,25 +1,29 @@
 """ Browser views for Async Move
 """
-import simplejson as json
+import json
+import logging
+from BTrees.OOBTree import OOBTree
 from OFS.Moniker import loadMoniker
 from Products.Five import BrowserView
 from Products.statusmessages.interfaces import IStatusMessage
 from plone.app.async.interfaces import IAsyncService
 from plone.app.async.browser.queue import JobsJSON
-from zc.twist import Failure
 from zope.annotation import IAnnotations
 from zope.component import getUtility
 from zc.async.utils import custom_repr
-from zc.async.interfaces import ACTIVE
 from ZODB.utils import u64
 from ZODB.POSException import ConflictError
+
+from OFS.CopySupport import cookie_path, _cb_decode, CopyError
+from OFS.CopySupport import eInvalid, eNotFound, eNoItemsSpecified
+from Products.CMFCore.utils import getToolByName
+from plone import api
+
+from eea.asyncmove.config import EEAMessageFactory as _
 from eea.asyncmove.async_move import async_move, JOB_PROGRESS_DETAILS
 from eea.asyncmove.events.async import AsyncMoveSuccess, AsyncMoveFail
-from OFS.CopySupport import cookie_path, _cb_decode, CopyError, \
-     eInvalid, eNotFound, eNoItemsSpecified
-from Products.CMFCore.utils import getToolByName
-from persistent.dict import PersistentDict
-from plone import api
+
+logger = logging.getLogger('eea.asyncmove')
 ASYNCMOVE_QUEUE = 'asyncmove'
 
 
@@ -57,16 +61,27 @@ class MoveAsyncConfirmation(BrowserView):
 
         return oblist
 
+
 class MoveAsync(BrowserView):
     """ Ping action executor
     """
+    def _redirect(self, msg, msg_type='info'):
+        """ Set status message to msg and redirect to context absolute_url
+        """
+        if self.request:
+            url = self.context.absolute_url() + '/async_move'
+            IStatusMessage(self.request).addStatusMessage(msg, type=msg_type)
+            self.request.response.redirect(url)
+        return msg
 
-    def __call__(self):
+    def post(self, **kwargs):
         newid = self.request.get('__cp')
+        if 'form.button.Cancel' in kwargs:
+            return self._redirect(_(u"Paste cancelled"))
 
-        messages = IStatusMessage(self.request)
         worker = getUtility(IAsyncService)
         queue = worker.getQueues()['']
+
         try:
             job = worker.queueJobInQueue(queue, (ASYNCMOVE_QUEUE,),
                 async_move,
@@ -80,15 +95,15 @@ class MoveAsync(BrowserView):
             anno['async_move_job'] = job_id
             portal = getToolByName(self, 'portal_url').getPortalObject()
             portal_anno = IAnnotations(portal)
-            annotation = portal_anno.get('async_move_jobs')
-            if not annotation:
-                annotation = PersistentDict()
-                portal_anno['async_move_jobs'] = annotation
+            if not portal_anno.get('async_move_jobs'):
+                portal_anno['async_move_jobs'] = OOBTree()
+
             annotation_job = {}
             portal_anno['async_move_jobs'][job_id] = annotation_job
 
-            messages.add(u"Item added to the queue. We notify you when the job"
-                u" is completed", type=u"info")
+            message_type = 'info'
+            message = _(u"Item added to the queue. "
+                        u"We will notify you when the job is completed")
 
             # delete __cp from the request
             if self.request is not None:
@@ -99,12 +114,18 @@ class MoveAsync(BrowserView):
                 )
                 self.request['__cp'] = None
 
-        except Exception:
+        except Exception, err:
+            logger.exception(err)
+            message_type = 'error'
             message = u"Failed to add items to the sync queue"
-            messages.add(message, type=u"error")
 
-        return self.request.RESPONSE.redirect(self.context.absolute_url())
+        return self._redirect(message, message_type)
 
+    def __call__(self, *args, **kwargs):
+        kwargs.update(getattr(self.request, 'form', {}))
+        if self.request.method.lower() == 'post':
+            return self.post(**kwargs)
+        return self.index()
 
 class MoveAsyncQueueJSON(JobsJSON):
     """ queue json
@@ -115,9 +136,9 @@ class MoveAsyncQueueJSON(JobsJSON):
             if len(job.args) == 0:
                 continue
             job_context = job.args[0]
-            if type(job_context) == tuple and \
-                    job_context[:len(self.portal_path)] == self.portal_path and \
-                    ASYNCMOVE_QUEUE in job.quota_names:
+            if (type(job_context) == tuple and
+                job_context[:len(self.portal_path)] == self.portal_path and
+                ASYNCMOVE_QUEUE in job.quota_names):
                 yield job_status, job
 
     def __call__(self):

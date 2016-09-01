@@ -9,8 +9,9 @@
         name="async_move"
         class=".async.MoveAsync"
         permission="cmf.ModifyPortalContent"
+        template="templates/async_move.pt"
     />
-    
+
      <browser:page
         for="*"
         layer=".interfaces.ILayer"
@@ -19,13 +20,13 @@
         permission="cmf.ModifyPortalContent"
         template="templates/paste_confirmation.pt"
     />
-    
+
     <browser:resource
         name="eea.async_move.js"
         file="./js/view.js"
         layer=".interfaces.ILayer"
     />
-    
+
     <browser:page
         for="*"
         layer=".interfaces.ILayer"
@@ -37,7 +38,7 @@
     <browser:page
         for="*"
         layer=".interfaces.ILayer"
-        name="manage_move_queue"
+        name="manage-move-queue"
         class=".async.MoveAsyncStatus"
         permission="cmf.ModifyPortalContent"
         template="templates/queue.pt"

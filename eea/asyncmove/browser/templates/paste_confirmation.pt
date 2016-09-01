@@ -14,6 +14,7 @@
          tal:define="useSelf context/@@plone_context_state/folder | nothing;
                      folder_warning python:useSelf and context.portal_type != 'Topic';
                      item_locked context/@@plone_lock_info/is_locked_for_current_user | nothing">
+
       <h1 class="documentFirstHeading"
           i18n:translate="alert_paste_locked_item"
            tal:condition="item_locked">
@@ -52,7 +53,7 @@
                      name="form.submitted"
                      value="1"
                      />
-              
+
               <input type="hidden"
                      name="__cp"
                      value="1"

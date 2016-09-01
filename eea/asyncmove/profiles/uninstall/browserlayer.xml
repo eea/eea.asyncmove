@@ -1,4 +1,4 @@
 <?xml version="1.0"?>
 <layers>
-  <layer name="eea.asyncmove.layer" remove="true" />
+  <layer name="eea.asyncmove.layer" remove="True" />
 </layers>
