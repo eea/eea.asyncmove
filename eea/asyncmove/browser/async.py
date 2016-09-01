@@ -1,4 +1,5 @@
-import transaction
+""" Browser views for Async Move
+"""
 import simplejson as json
 from OFS.Moniker import loadMoniker
 from Products.Five import BrowserView
@@ -25,24 +26,24 @@ ASYNCMOVE_QUEUE = 'asyncmove'
 class MoveAsyncConfirmation(BrowserView):
     """ action confirmation
     """
-    
+
     def cp_info(self):
         """ get info of files to paste
         """
-        
+
         newid = self.request.get('__cp')
-        
+
         if not newid:
             raise CopyError(eNoItemsSpecified)
-    
+
         try:
             op, mdatas = _cb_decode(newid)
         except:
             raise CopyError(eInvalid)
-            
+
         oblist = []
         app = self.context.getPhysicalRoot()
-    
+
         for mdata in mdatas:
             m = loadMoniker(mdata)
             try:
@@ -51,18 +52,18 @@ class MoveAsyncConfirmation(BrowserView):
                 raise
             except:
                 raise CopyError(eNotFound)
-    
+
             oblist.append(ob)
-        
+
         return oblist
-            
+
 class MoveAsync(BrowserView):
     """ Ping action executor
     """
 
     def __call__(self):
         newid = self.request.get('__cp')
-        
+
         messages = IStatusMessage(self.request)
         worker = getUtility(IAsyncService)
         queue = worker.getQueues()['']
@@ -74,18 +75,18 @@ class MoveAsync(BrowserView):
                 fail_event=AsyncMoveFail,
                 email=api.user.get_current().getProperty('email')
             )
+            job_id = u64(job._p_oid)
             anno = IAnnotations(self.context)
-            anno['async_move_job'] = job
+            anno['async_move_job'] = job_id
             portal = getToolByName(self, 'portal_url').getPortalObject()
             portal_anno = IAnnotations(portal)
-            annotation = portal_anno.get('async_move_job')
+            annotation = portal_anno.get('async_move_jobs')
             if not annotation:
                 annotation = PersistentDict()
-                portal_anno['async_move_job'] = annotation
-            job_id = u64(job._p_oid)
+                portal_anno['async_move_jobs'] = annotation
             annotation_job = {}
-            portal_anno['async_move_job'][job_id] = annotation_job
-            
+            portal_anno['async_move_jobs'][job_id] = annotation_job
+
             messages.add(u"Item added to the queue. We notify you when the job"
                 u" is completed", type=u"info")
 
@@ -145,7 +146,7 @@ class MoveAsyncQueueJSON(JobsJSON):
     def get_job_annotation(self, job):
         portal = getToolByName(self.context, 'portal_url').getPortalObject()
         portal_anno = IAnnotations(portal)
-        async_job_status = portal_anno.get('async_move_job')
+        async_job_status = portal_anno.get('async_move_jobs')
         if async_job_status:
             job_id = u64(job._p_oid)
             annotation_job = async_job_status.get(job_id)

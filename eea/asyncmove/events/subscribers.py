@@ -45,7 +45,7 @@ def saveJobProgress(event):
     """
     portal = getToolByName(event.object, 'portal_url').getPortalObject()
     portal_anno = IAnnotations(portal)
-    annotation = portal_anno.get('async_move_job')
+    annotation = portal_anno.get('async_move_jobs')
     annotation_job = annotation[event.job_id]
 
     if event.operation == 'initialize':

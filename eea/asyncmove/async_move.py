@@ -1,11 +1,13 @@
+""" Async move
+"""
 import sys
 import logging
-import transaction
 from cgi import escape
 from Acquisition._Acquisition import aq_inner, aq_base
 from Acquisition._Acquisition import aq_parent
-from OFS.CopySupport import CopyError, eNoData, _cb_decode, \
-    eInvalid, eNotFound, sanity_check, eNoItemsSpecified, eNotSupported
+from OFS.CopySupport import CopyError, eNoData, _cb_decode
+from OFS.CopySupport import eInvalid, eNotFound, sanity_check
+from OFS.CopySupport import eNoItemsSpecified, eNotSupported
 from OFS.Moniker import loadMoniker
 from OFS.subscribers import compatibilityCall
 from Products.CMFCore.utils import getToolByName
@@ -16,7 +18,6 @@ from zope import event
 from zope.annotation import IAnnotations
 from eea.asyncmove.async import ContextWrapper
 from Products.Archetypes.interfaces.base import IBaseObject
-from ZODB.utils import u64
 from App.Dialogs import MessageDialog
 from eea.asyncmove.events.async import AsyncMoveSaveProgress
 logger = logging.getLogger('eea.asyncmove')
@@ -40,6 +41,7 @@ def reindex_object(obj, recursive=0, REQUEST=None):
             if not obj.get('REQUEST'):
                 obj.REQUEST = REQUEST
             obj.reindexObject()
+            del obj.REQUEST
         except:
             logger.warn(
                 'couldnt reindex obj --> %s',
@@ -63,8 +65,7 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
     """
 
     anno = IAnnotations(self)
-    job = anno.get('async_move_job')
-    job_id = u64(job._p_oid)
+    job_id = anno.get('async_move_job')
 
     if not REQUEST:
         # Create a request to work with
@@ -111,44 +112,44 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
         self, operation='initialize', job_id=job_id, oblist_id=[
             (o.getId(), o.Title()) for o in oblist
     ]))
-    
+
     if op == 0:
         # Copy operation
         for i, ob in enumerate(oblist):
             orig_id = ob.getId()
             if not ob.cb_isCopyable():
                 raise CopyError(eNotSupported % escape(orig_id))
-            
+
             id = self._get_id(orig_id)
             result.append({'id': orig_id, 'new_id': id})
-            
+
             event.notify(AsyncMoveSaveProgress(
                 self, operation='sub_progress', job_id=job_id,
                 obj_id = ob.getId(), progress=.25
             ))
-            
+
             orig_ob = ob
             ob = ob._getCopy(self)
             ob._setId(id)
-            
+
             event.notify(AsyncMoveSaveProgress(
                 self, operation='sub_progress', job_id=job_id,
                 obj_id = ob.getId(), progress=.50
             ))
-            
+
             self._setObject(id, ob)
             ob = self._getOb(id)
             ob.wl_clearLocks()
-            
+
             event.notify(AsyncMoveSaveProgress(
                 self, operation='sub_progress', job_id=job_id,
                 obj_id = ob.getId(), progress=.75
             ))
-            
+
             ob._postCopy(self, op=0)
 
             compatibilityCall('manage_afterClone', ob, ob)
-            
+
             event.notify(AsyncMoveSaveProgress(
                 self, operation='sub_progress', job_id=job_id,
                 obj_id = ob.getId(), progress=1
@@ -219,8 +220,8 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
                     % self.__class__.__name__, DeprecationWarning)
             ob = self._getOb(id)
 
-            if not ob.get('REQUEST'):
-                ob.REQUEST = REQUEST
+            # if not ob.get('REQUEST'):
+            #     ob.REQUEST = REQUEST
 
             ob._postCopy(self, op=1)
             # try to make ownership implicit if possible
@@ -257,14 +258,13 @@ def async_move(context, success_event, fail_event, **kwargs):
     newid = kwargs.get('newid', '')
     email = kwargs.get('email', '')
 
-    wrapper = None
-
     anno = IAnnotations(context)
-    job = anno.get('async_move_job')
-    job_id = u64(job._p_oid)
+    job_id = anno.get('async_move_job')
 
     if not newid:
-        wrapper.error = 'Invalid newid'
+        wrapper = ContextWrapper(context)(
+            error=u'Invalid newid'
+        )
         event.notify(fail_event(wrapper))
         raise CopyError(eNoItemsSpecified)
 
@@ -295,9 +295,7 @@ def async_move(context, success_event, fail_event, **kwargs):
     )
 
     try:
-        manage_pasteObjects_no_events(
-            context, cb_copy_data=newid
-        )
+        manage_pasteObjects_no_events(context, cb_copy_data=newid)
     except Exception, err:
         wrapper.error = err.message
         wrapper.job_id = job_id
@@ -306,7 +304,7 @@ def async_move(context, success_event, fail_event, **kwargs):
         raise CopyError(MessageDialog(
             title='Error',
             message=err.message,
-            action ='manage_main',
+            action='manage_main',
         ))
 
     event.notify(success_event(wrapper))
