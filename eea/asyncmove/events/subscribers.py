@@ -1,12 +1,10 @@
 """ Subscribers
 """
-import transaction
 import os
 import logging
 from plone.app.async.subscribers import set_quota
 from zope.annotation import IAnnotations
 from Products.CMFCore.utils import getToolByName
-from ZODB.utils import u64
 logger = logging.getLogger('eea.asyncmove')
 
 
@@ -49,7 +47,7 @@ def saveJobProgress(event):
     annotation_job = annotation[event.job_id]
 
     if event.operation == 'initialize':
-        annotation_job['sub_progress'] =  {}
+        annotation_job['sub_progress'] = {}
         annotation_job['title'] = "Move below objects to %s" % (
             event.object.absolute_url()
         )

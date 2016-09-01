@@ -41,7 +41,7 @@ class MoveAsyncConfirmation(BrowserView):
             raise CopyError(eNoItemsSpecified)
 
         try:
-            op, mdatas = _cb_decode(newid)
+            _op, mdatas = _cb_decode(newid)
         except:
             raise CopyError(eInvalid)
 
@@ -75,6 +75,8 @@ class MoveAsync(BrowserView):
         return msg
 
     def post(self, **kwargs):
+        """ POST
+        """
         newid = self.request.get('__cp')
         if 'form.button.Cancel' in kwargs:
             return self._redirect(_(u"Paste cancelled"))
@@ -83,7 +85,8 @@ class MoveAsync(BrowserView):
         queue = worker.getQueues()['']
 
         try:
-            job = worker.queueJobInQueue(queue, (ASYNCMOVE_QUEUE,),
+            job = worker.queueJobInQueue(
+                queue, (ASYNCMOVE_QUEUE,),
                 async_move,
                 self.context, newid=newid,
                 success_event=AsyncMoveSuccess,
@@ -132,11 +135,13 @@ class MoveAsyncQueueJSON(JobsJSON):
     """
 
     def _filter_jobs(self):
+        """ Filter jobs
+        """
         for job_status, job in self._find_jobs():
             if len(job.args) == 0:
                 continue
             job_context = job.args[0]
-            if (type(job_context) == tuple and
+            if (isinstance(job_context, tuple) and
                 job_context[:len(self.portal_path)] == self.portal_path and
                 ASYNCMOVE_QUEUE in job.quota_names):
                 yield job_status, job
@@ -165,6 +170,8 @@ class MoveAsyncQueueJSON(JobsJSON):
         return json.dumps(jobs)
 
     def get_job_annotation(self, job):
+        """ Get job annotation
+        """
         portal = getToolByName(self.context, 'portal_url').getPortalObject()
         portal_anno = IAnnotations(portal)
         async_job_status = portal_anno.get('async_move_jobs')
@@ -175,6 +182,8 @@ class MoveAsyncQueueJSON(JobsJSON):
         return None
 
     def format_title(self, job):
+        """ Title format
+        """
         annotation = self.get_job_annotation(job)
         custom_title = custom_repr(job.callable)
         if not annotation:
@@ -184,7 +193,8 @@ class MoveAsyncQueueJSON(JobsJSON):
         return title
 
     def format_progress(self, job):
-
+        """ Format progress
+        """
         annotation = self.get_job_annotation(job)
         if not annotation:
             return ''
@@ -198,6 +208,8 @@ class MoveAsyncQueueJSON(JobsJSON):
             progress, progress, self.format_status(job))
 
     def format_subprogress(self, job):
+        """ Format sub-progress
+        """
         sub_progresses = []
 
         annotation = self.get_job_annotation(job)

@@ -1,4 +1,6 @@
-# -*- extra stuff goes here -*-
+""" Init
+"""
 
 def initialize(context):
-    """Initializer called when used as a Zope 2 product."""
+    """Initializer called when used as a Zope 2 product.
+    """

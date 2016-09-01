@@ -1,7 +1,6 @@
+""" Tests
+"""
 import unittest
-
-#from zope.testing import doctestunit
-#from zope.component import testing
 from Testing import ZopeTestCase as ztc
 
 from Products.Five import fiveconfigure
@@ -13,21 +12,29 @@ import eea.asyncmove
 
 
 class TestCase(ptc.PloneTestCase):
-
+    """ Test case
+    """
     class layer(PloneSite):
-
+        """ Layer
+        """
         @classmethod
         def setUp(cls):
+            """ Setup
+            """
             fiveconfigure.debug_mode = True
             ztc.installPackage(eea.asyncmove)
             fiveconfigure.debug_mode = False
 
         @classmethod
         def tearDown(cls):
+            """ Tear down
+            """
             pass
 
 
 def test_suite():
+    """ Test suite
+    """
     return unittest.TestSuite([
 
         # Unit tests

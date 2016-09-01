@@ -42,15 +42,13 @@ def reindex_object(obj, recursive=0, REQUEST=None):
                 obj.REQUEST = REQUEST
             obj.reindexObject()
             del obj.REQUEST
-        except:
+        except Exception, err:
             logger.warn(
-                'couldnt reindex obj --> %s',
-                getattr(obj, 'absolute_url', lambda :'None')()
-            )
-            pass
+                "Couldn't reindex obj --> %s: %s",
+                getattr(obj, 'absolute_url', lambda: 'None')(), err)
 
         if recursive:
-            children = getattr(obj, 'objectValues', lambda :() )()
+            children = getattr(obj, 'objectValues', lambda: ())()
             for child in children:
                 reindex_object(child, recursive, REQUEST)
 
@@ -120,30 +118,37 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
             if not ob.cb_isCopyable():
                 raise CopyError(eNotSupported % escape(orig_id))
 
-            id = self._get_id(orig_id)
-            result.append({'id': orig_id, 'new_id': id})
+            oid = self._get_id(orig_id)
+            result.append({'id': orig_id, 'new_id': oid})
 
             event.notify(AsyncMoveSaveProgress(
-                self, operation='sub_progress', job_id=job_id,
-                obj_id = ob.getId(), progress=.25
+                self,
+                operation='sub_progress',
+                job_id=job_id,
+                obj_id=ob.getId(), progress=.25
             ))
 
-            orig_ob = ob
             ob = ob._getCopy(self)
-            ob._setId(id)
+            ob._setId(oid)
 
             event.notify(AsyncMoveSaveProgress(
-                self, operation='sub_progress', job_id=job_id,
-                obj_id = ob.getId(), progress=.50
+                self,
+                operation='sub_progress',
+                job_id=job_id,
+                obj_id=ob.getId(),
+                progress=.50
             ))
 
-            self._setObject(id, ob)
-            ob = self._getOb(id)
+            self._setObject(oid, ob)
+            ob = self._getOb(oid)
             ob.wl_clearLocks()
 
             event.notify(AsyncMoveSaveProgress(
-                self, operation='sub_progress', job_id=job_id,
-                obj_id = ob.getId(), progress=.75
+                self,
+                operation='sub_progress',
+                job_id=job_id,
+                obj_id=ob.getId(),
+                progress=.75
             ))
 
             ob._postCopy(self, op=0)
@@ -151,11 +156,17 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
             compatibilityCall('manage_afterClone', ob, ob)
 
             event.notify(AsyncMoveSaveProgress(
-                self, operation='sub_progress', job_id=job_id,
-                obj_id = ob.getId(), progress=1
+                self,
+                operation='sub_progress',
+                job_id=job_id,
+                obj_id=ob.getId(),
+                progress=1
             ))
+
             event.notify(AsyncMoveSaveProgress(
-                self, operation='progress', job_id=job_id,
+                self,
+                operation='progress',
+                job_id=job_id,
                 progress=steps*(i+1)/100
             ))
 
@@ -170,18 +181,21 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
 
             orig_container = aq_parent(aq_inner(ob))
             if aq_base(orig_container) is aq_base(self):
-                id = orig_id
+                oid = orig_id
             else:
-                id = self._get_id(orig_id)
-            result.append({'id': orig_id, 'new_id': id})
+                oid = self._get_id(orig_id)
+            result.append({'id': orig_id, 'new_id': oid})
 
             # try to make ownership explicit so that it gets carried
             # along to the new location if needed.
             ob.manage_changeOwnershipType(explicit=1)
 
             event.notify(AsyncMoveSaveProgress(
-                self, operation='sub_progress', job_id=job_id,
-                obj_id = ob.getId(), progress=.25
+                self,
+                operation='sub_progress',
+                job_id=job_id,
+                obj_id=ob.getId(),
+                progress=.25
             ))
 
             try:
@@ -195,30 +209,32 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
                         uncatalog_path = obj_brain.getPath()
                         cat.uncatalog_object(uncatalog_path)
                 except AttributeError:
-                    logger.warn("%s could not be found" % uncatalog_path)
+                    logger.warn("%s could not be found", uncatalog_path)
             except TypeError:
                 orig_container._delObject(orig_id)
                 logger.warn(
-                    "%s._delObject without suppress_events is discouraged."
-                    % orig_container.__class__.__name__,
-                    DeprecationWarning)
+                    "%s._delObject without suppress_events is discouraged.",
+                    orig_container.__class__.__name__)
 
             event.notify(AsyncMoveSaveProgress(
-                self, operation='sub_progress', job_id=job_id,
-                obj_id = ob.getId(), progress=.50
+                self,
+                operation='sub_progress',
+                job_id=job_id,
+                obj_id=ob.getId(),
+                progress=.50
             ))
 
             ob = aq_base(ob)
-            ob._setId(id)
+            ob._setId(oid)
 
             try:
-                self._setObject(id, ob, set_owner=0, suppress_events=True)
+                self._setObject(oid, ob, set_owner=0, suppress_events=True)
             except TypeError:
-                self._setObject(id, ob, set_owner=0)
+                self._setObject(oid, ob, set_owner=0)
                 logger.warn(
-                    "%s._setObject without suppress_events is discouraged."
-                    % self.__class__.__name__, DeprecationWarning)
-            ob = self._getOb(id)
+                    "%s._setObject without suppress_events is discouraged.",
+                    self.__class__.__name__)
+            ob = self._getOb(oid)
 
             # if not ob.get('REQUEST'):
             #     ob.REQUEST = REQUEST
@@ -228,18 +244,27 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
             ob.manage_changeOwnershipType(explicit=0)
 
             event.notify(AsyncMoveSaveProgress(
-                self, operation='sub_progress', job_id=job_id,
-                obj_id = ob.getId(), progress=.75
+                self,
+                operation='sub_progress',
+                job_id=job_id,
+                obj_id=ob.getId(),
+                progress=.75
             ))
 
             reindex_object(ob, recursive=1, REQUEST=REQUEST)
 
             event.notify(AsyncMoveSaveProgress(
-                self, operation='sub_progress', job_id=job_id,
-                obj_id = ob.getId(), progress=1
+                self,
+                operation='sub_progress',
+                job_id=job_id,
+                obj_id=ob.getId(),
+                progress=1
             ))
+
             event.notify(AsyncMoveSaveProgress(
-                self, operation='progress', job_id=job_id,
+                self,
+                operation='progress',
+                job_id=job_id,
                 progress=steps*(i+1)/100
             ))
 
@@ -269,7 +294,7 @@ def async_move(context, success_event, fail_event, **kwargs):
         raise CopyError(eNoItemsSpecified)
 
     try:
-        op, mdatas = _cb_decode(newid)
+        _op, mdatas = _cb_decode(newid)
     except:
         raise CopyError(eInvalid)
     oblist = []
@@ -290,7 +315,7 @@ def async_move(context, success_event, fail_event, **kwargs):
         folder_move_from=oblist and aq_parent(
             aq_inner(oblist[0])).absolute_url(),
         folder_move_to=context.absolute_url(),
-        folder_move_objects=', '.join([ob.getId() for ob in oblist]),
+        folder_move_objects=', '.join([obj.getId() for obj in oblist]),
         asyncmove_email=email,
     )
 

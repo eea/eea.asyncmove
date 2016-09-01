@@ -12,17 +12,14 @@ class AsyncMoveFail(AsyncMoveEvent):
     """ Event triggered when an async move job failed
     """
 
+
 @implementer(IAsyncMoveSuccess)
 class AsyncMoveSuccess(AsyncMoveEvent):
     """ Event triggered when an async move job succeeded
     """
 
+
 @implementer(IAsyncMoveSaveProgress)
 class AsyncMoveSaveProgress(AsyncMoveEvent):
     """ Event triggered when an async move job saved its progress
     """
-
-    def __init__(self, context, **kwargs):
-        self.object = context
-        for key, value in kwargs.items():
-            setattr(self, key, value)

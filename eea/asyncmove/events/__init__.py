@@ -10,3 +10,5 @@ class AsyncMoveEvent(object):
     """
     def __init__(self, context, **kwargs):
         self.object = context
+        for key, value in kwargs.items():
+            setattr(self, key, value)
