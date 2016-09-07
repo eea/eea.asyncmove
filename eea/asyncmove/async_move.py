@@ -31,17 +31,15 @@ JOB_PROGRESS_DETAILS = {
 }
 
 
-def reindex_object(obj, recursive=0, REQUEST=None):
+def reindex_object(obj, recursive=0):
     """reindex the given object.
 
     If 'recursive' is true then also take reindex of all sub-objects.
     """
     if IBaseObject.providedBy(obj):
         try:
-            if not obj.get('REQUEST'):
-                obj.REQUEST = REQUEST
-            obj.reindexObject()
-            del obj.REQUEST
+            ctool = getToolByName(obj, 'portal_catalog')
+            ctool.reindexObject(obj)
         except Exception, err:
             logger.warn(
                 "Couldn't reindex obj --> %s: %s",
@@ -50,7 +48,7 @@ def reindex_object(obj, recursive=0, REQUEST=None):
         if recursive:
             children = getattr(obj, 'objectValues', lambda: ())()
             for child in children:
-                reindex_object(child, recursive, REQUEST)
+                reindex_object(child, recursive)
 
 
 def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
@@ -236,9 +234,6 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
                     self.__class__.__name__)
             ob = self._getOb(oid)
 
-            # if not ob.get('REQUEST'):
-            #     ob.REQUEST = REQUEST
-
             ob._postCopy(self, op=1)
             # try to make ownership implicit if possible
             ob.manage_changeOwnershipType(explicit=0)
@@ -251,7 +246,7 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
                 progress=.75
             ))
 
-            reindex_object(ob, recursive=1, REQUEST=REQUEST)
+            reindex_object(ob, recursive=1)
 
             event.notify(AsyncMoveSaveProgress(
                 self,
