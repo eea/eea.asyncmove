@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <contentrules>
  <rule name="eea-asyncmove-rule-fail" title="Async move failed" cascading="False"
-    description="Notify the person who requested to move folder and that move failed."
+    description="Notify the person who requested to move folder that move failed."
     enabled="True" event="eea.asyncmove.events.interfaces.IAsyncMoveFail"
     stop-after="False">
   <conditions/>
@@ -19,14 +19,14 @@ ${asyncmove_error}
 ----------
 This email is auto-generated and delivered to you because a move operation was requested for ${folder_move_from}. If you did not request this then just ignore this email.
 ----------</property>
-    <property name="subject">Your move request is FAILED</property>
+    <property name="subject">Your move request has FAILED</property>
     <property name="recipients">${asyncmove_email}</property>
     <property name="exclude_actor">False</property>
    </action>
   </actions>
  </rule>
  <rule name="eea-asyncmove-rule-success" title="Async move succeeded" cascading="False"
-    description="Notify the person who requested to move a folder and that move successfully."
+    description="Notify the person who requested to move a folder that move is successfull."
     enabled="True" event="eea.asyncmove.events.interfaces.IAsyncMoveSuccess"
     stop-after="False">
   <conditions/>
@@ -36,11 +36,10 @@ This email is auto-generated and delivered to you because a move operation was r
     <property
        name="message">Your request to move ${folder_move_objects} from ${folder_move_from} to ${folder_move_to} is ready.
 
-Wait until the async job will saved
 ----------
 This email is auto-generated and delivered to you because a move operation was requested for ${folder_move_from}. If you did not request this then just ignore this email.
 ----------</property>
-    <property name="subject">Your move request is ready</property>
+    <property name="subject">Your content has been moved successfully</property>
     <property name="recipients">${asyncmove_email}</property>
     <property name="exclude_actor">False</property>
    </action>
