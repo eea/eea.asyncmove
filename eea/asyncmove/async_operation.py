@@ -328,3 +328,89 @@ def async_move(context, success_event, fail_event, **kwargs):
         ))
 
     event.notify(success_event(wrapper))
+
+
+def create_request():
+    # Create a request to work with
+    response = HTTPResponse(stdout=sys.stdout)
+    env = {'SERVER_NAME':'fake_server',
+           'SERVER_PORT':'80',
+           'REQUEST_METHOD':'GET'}
+    return HTTPRequest(sys.stdin, env, response)
+
+
+def async_rename(context, success_event, fail_event, **kwargs):
+    """ Async rename job
+    """
+    newid = kwargs.get('newid', '')
+    newtitle = kwargs.get('newtitle', '')
+    paths = kwargs.get('paths', '')
+    email = kwargs.get('email', '')
+
+    anno = IAnnotations(context)
+    job_id = anno.get('async_move_job')
+
+    if not newid:
+        wrapper = ContextWrapper(context)(
+            error=u'Invalid newid'
+        )
+        event.notify(fail_event(wrapper))
+        raise CopyError(eNoItemsSpecified)
+
+    try:
+        _op, mdatas = _cb_decode(newid)
+    except:
+        raise CopyError(eInvalid)
+    oblist = []
+    app = context.getPhysicalRoot()
+
+    for mdata in mdatas:
+        m = loadMoniker(mdata)
+        try:
+            ob = m.bind(app)
+        except ConflictError:
+            raise
+        except:
+            raise CopyError(eNotFound)
+
+        oblist.append(ob)
+
+    wrapper = ContextWrapper(context)(
+        folder_move_from=oblist and aq_parent(
+            aq_inner(oblist[0])).absolute_url(),
+        folder_move_to=context.absolute_url(),
+        folder_move_objects=', '.join([obj.getId() for obj in oblist]),
+        asyncmove_email=email
+    )
+
+    try:
+        putils = context.plone_utils
+        request = create_request()
+        success, failure = putils.renameObjectsByPaths(paths, newid, newtitle,
+                                                       REQUEST=request)
+        message = None
+        if message is None:
+            message = _(u'${count} item(s) renamed.',
+                        mapping={u'count': str(len(success))})
+
+        if failure:
+            message = _(u'The following item(s) could not be renamed: ${items}.',
+                        mapping={u'items': ', '.join(failure.keys())})
+            event.notify(fail_event(wrapper))
+            raise CopyError(MessageDialog(
+                title='Error',
+                message=message,
+                action='manage_main',
+            ))
+    except Exception, err:
+        wrapper.error = err.message
+        wrapper.job_id = job_id
+
+        event.notify(fail_event(wrapper))
+        raise CopyError(MessageDialog(
+            title='Error',
+            message=err.message,
+            action='manage_main',
+        ))
+
+    event.notify(success_event(wrapper))
