@@ -12,6 +12,23 @@
         template="templates/async_move.pt"
     />
 
+    <browser:page
+        for="*"
+        layer=".interfaces.ILayer"
+        name="async_rename"
+        class=".async.RenameAsync"
+        permission="cmf.ModifyPortalContent"
+        template="templates/async_rename.pt"
+    />
+
+    <browser:page
+        for="*"
+        layer=".interfaces.ILayer"
+        name="async_rename_redirect"
+        class=".async.RenameAsyncRedirect"
+        permission="cmf.ModifyPortalContent"
+    />
+
      <browser:page
         for="*"
         layer=".interfaces.ILayer"

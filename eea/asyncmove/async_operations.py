@@ -1,25 +1,28 @@
 """ Async move
 """
-import sys
 import logging
+import sys
 from cgi import escape
+
 from Acquisition._Acquisition import aq_inner, aq_base
 from Acquisition._Acquisition import aq_parent
+from App.Dialogs import MessageDialog
 from OFS.CopySupport import CopyError, eNoData, _cb_decode
 from OFS.CopySupport import eInvalid, eNotFound, sanity_check
 from OFS.CopySupport import eNoItemsSpecified, eNotSupported
 from OFS.Moniker import loadMoniker
 from OFS.subscribers import compatibilityCall
+from Products.Archetypes.interfaces.base import IBaseObject
 from Products.CMFCore.utils import getToolByName
 from ZODB.POSException import ConflictError
 from ZPublisher.HTTPRequest import HTTPRequest
 from ZPublisher.HTTPResponse import HTTPResponse
-from zope import event
-from zope.annotation import IAnnotations
 from eea.asyncmove.async import ContextWrapper
-from Products.Archetypes.interfaces.base import IBaseObject
-from App.Dialogs import MessageDialog
+from eea.asyncmove.config import EEAMessageFactory as _
 from eea.asyncmove.events.async import AsyncMoveSaveProgress
+from zope.annotation import IAnnotations
+from zope.event import notify
+
 logger = logging.getLogger('eea.asyncmove')
 
 
@@ -65,11 +68,7 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
 
     if not REQUEST:
         # Create a request to work with
-        response = HTTPResponse(stdout=sys.stdout)
-        env = {'SERVER_NAME':'fake_server',
-               'SERVER_PORT':'80',
-               'REQUEST_METHOD':'GET'}
-        REQUEST = HTTPRequest(sys.stdin, env, response)
+        REQUEST = create_request()
 
     if cb_copy_data is not None:
         cp = cb_copy_data
@@ -104,7 +103,7 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
 
     steps = oblist and int(100/len(oblist)) or 0
 
-    event.notify(AsyncMoveSaveProgress(
+    notify(AsyncMoveSaveProgress(
         self, operation='initialize', job_id=job_id, oblist_id=[
             (o.getId(), o.Title()) for o in oblist
     ]))
@@ -119,7 +118,7 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
             oid = self._get_id(orig_id)
             result.append({'id': orig_id, 'new_id': oid})
 
-            event.notify(AsyncMoveSaveProgress(
+            notify(AsyncMoveSaveProgress(
                 self,
                 operation='sub_progress',
                 job_id=job_id,
@@ -129,7 +128,7 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
             ob = ob._getCopy(self)
             ob._setId(oid)
 
-            event.notify(AsyncMoveSaveProgress(
+            notify(AsyncMoveSaveProgress(
                 self,
                 operation='sub_progress',
                 job_id=job_id,
@@ -141,7 +140,7 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
             ob = self._getOb(oid)
             ob.wl_clearLocks()
 
-            event.notify(AsyncMoveSaveProgress(
+            notify(AsyncMoveSaveProgress(
                 self,
                 operation='sub_progress',
                 job_id=job_id,
@@ -153,7 +152,7 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
 
             compatibilityCall('manage_afterClone', ob, ob)
 
-            event.notify(AsyncMoveSaveProgress(
+            notify(AsyncMoveSaveProgress(
                 self,
                 operation='sub_progress',
                 job_id=job_id,
@@ -161,7 +160,7 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
                 progress=1
             ))
 
-            event.notify(AsyncMoveSaveProgress(
+            notify(AsyncMoveSaveProgress(
                 self,
                 operation='progress',
                 job_id=job_id,
@@ -188,7 +187,7 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
             # along to the new location if needed.
             ob.manage_changeOwnershipType(explicit=1)
 
-            event.notify(AsyncMoveSaveProgress(
+            notify(AsyncMoveSaveProgress(
                 self,
                 operation='sub_progress',
                 job_id=job_id,
@@ -214,7 +213,7 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
                     "%s._delObject without suppress_events is discouraged.",
                     orig_container.__class__.__name__)
 
-            event.notify(AsyncMoveSaveProgress(
+            notify(AsyncMoveSaveProgress(
                 self,
                 operation='sub_progress',
                 job_id=job_id,
@@ -238,7 +237,7 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
             # try to make ownership implicit if possible
             ob.manage_changeOwnershipType(explicit=0)
 
-            event.notify(AsyncMoveSaveProgress(
+            notify(AsyncMoveSaveProgress(
                 self,
                 operation='sub_progress',
                 job_id=job_id,
@@ -248,7 +247,7 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
 
             reindex_object(ob, recursive=1)
 
-            event.notify(AsyncMoveSaveProgress(
+            notify(AsyncMoveSaveProgress(
                 self,
                 operation='sub_progress',
                 job_id=job_id,
@@ -256,14 +255,14 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
                 progress=1
             ))
 
-            event.notify(AsyncMoveSaveProgress(
+            notify(AsyncMoveSaveProgress(
                 self,
                 operation='progress',
                 job_id=job_id,
                 progress=steps*(i+1)/100
             ))
 
-    event.notify(AsyncMoveSaveProgress(
+    notify(AsyncMoveSaveProgress(
         self, operation='progress', job_id=job_id,
         progress=1
     ))
@@ -285,7 +284,7 @@ def async_move(context, success_event, fail_event, **kwargs):
         wrapper = ContextWrapper(context)(
             error=u'Invalid newid'
         )
-        event.notify(fail_event(wrapper))
+        notify(fail_event(wrapper))
         raise CopyError(eNoItemsSpecified)
 
     try:
@@ -320,17 +319,19 @@ def async_move(context, success_event, fail_event, **kwargs):
         wrapper.error = err.message
         wrapper.job_id = job_id
 
-        event.notify(fail_event(wrapper))
+        notify(fail_event(wrapper))
         raise CopyError(MessageDialog(
             title='Error',
             message=err.message,
             action='manage_main',
         ))
 
-    event.notify(success_event(wrapper))
+    notify(success_event(wrapper))
 
 
 def create_request():
+    """ fake request
+    """
     # Create a request to work with
     response = HTTPResponse(stdout=sys.stdout)
     env = {'SERVER_NAME':'fake_server',
@@ -342,39 +343,22 @@ def create_request():
 def async_rename(context, success_event, fail_event, **kwargs):
     """ Async rename job
     """
-    newid = kwargs.get('newid', '')
-    newtitle = kwargs.get('newtitle', '')
+    newids = kwargs.get('new_ids', '')
+    newtitle = kwargs.get('new_title', '')
     paths = kwargs.get('paths', '')
     email = kwargs.get('email', '')
 
     anno = IAnnotations(context)
     job_id = anno.get('async_move_job')
 
-    if not newid:
+    if not newids:
         wrapper = ContextWrapper(context)(
             error=u'Invalid newid'
         )
-        event.notify(fail_event(wrapper))
+        notify(fail_event(wrapper))
         raise CopyError(eNoItemsSpecified)
 
-    try:
-        _op, mdatas = _cb_decode(newid)
-    except:
-        raise CopyError(eInvalid)
     oblist = []
-    app = context.getPhysicalRoot()
-
-    for mdata in mdatas:
-        m = loadMoniker(mdata)
-        try:
-            ob = m.bind(app)
-        except ConflictError:
-            raise
-        except:
-            raise CopyError(eNotFound)
-
-        oblist.append(ob)
-
     wrapper = ContextWrapper(context)(
         folder_move_from=oblist and aq_parent(
             aq_inner(oblist[0])).absolute_url(),
@@ -386,17 +370,13 @@ def async_rename(context, success_event, fail_event, **kwargs):
     try:
         putils = context.plone_utils
         request = create_request()
-        success, failure = putils.renameObjectsByPaths(paths, newid, newtitle,
+        _success, failure = putils.renameObjectsByPaths(paths, newids, newtitle,
                                                        REQUEST=request)
-        message = None
-        if message is None:
-            message = _(u'${count} item(s) renamed.',
-                        mapping={u'count': str(len(success))})
-
         if failure:
-            message = _(u'The following item(s) could not be renamed: ${items}.',
-                        mapping={u'items': ', '.join(failure.keys())})
-            event.notify(fail_event(wrapper))
+            message = _(u'The following item(s) could not be renamed:'
+                        u' ${items}.', mapping={u'items': ', '.join(
+                failure.keys())})
+            notify(fail_event(wrapper))
             raise CopyError(MessageDialog(
                 title='Error',
                 message=message,
@@ -406,11 +386,11 @@ def async_rename(context, success_event, fail_event, **kwargs):
         wrapper.error = err.message
         wrapper.job_id = job_id
 
-        event.notify(fail_event(wrapper))
+        notify(fail_event(wrapper))
         raise CopyError(MessageDialog(
             title='Error',
             message=err.message,
             action='manage_main',
         ))
 
-    event.notify(success_event(wrapper))
+    notify(success_event(wrapper))

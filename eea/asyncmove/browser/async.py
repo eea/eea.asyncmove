@@ -5,6 +5,7 @@ import logging
 from BTrees.OOBTree import OOBTree
 from OFS.Moniker import loadMoniker
 from Products.Five import BrowserView
+from Products.PythonScripts.standard import url_quote_plus
 from Products.statusmessages.interfaces import IStatusMessage
 from plone.app.async.interfaces import IAsyncService
 from plone.app.async.browser.queue import JobsJSON
@@ -20,7 +21,8 @@ from Products.CMFCore.utils import getToolByName
 from plone import api
 
 from eea.asyncmove.config import EEAMessageFactory as _
-from eea.asyncmove.async_move import async_move, JOB_PROGRESS_DETAILS
+from eea.asyncmove.async_operations import async_move, JOB_PROGRESS_DETAILS
+from eea.asyncmove.async_operations import async_rename
 from eea.asyncmove.events.async import AsyncMoveSuccess, AsyncMoveFail
 
 logger = logging.getLogger('eea.asyncmove')
@@ -129,6 +131,74 @@ class MoveAsync(BrowserView):
         if self.request.method.lower() == 'post':
             return self.post(**kwargs)
         return self.index()
+
+
+class RenameAsync(MoveAsync):
+    """ RenameAsync
+    """
+    def post(self, **kwargs):
+        """ POST
+        """
+        newid = self.request.get('__cp')
+        if 'form.button.Cancel' in kwargs:
+            return self._redirect(_(u"Paste cancelled"))
+
+        worker = getUtility(IAsyncService)
+        queue = worker.getQueues()['']
+
+        try:
+            job = worker.queueJobInQueue(
+                queue, (ASYNCMOVE_QUEUE,),
+                async_rename,
+                self.context, newid=newid,
+                success_event=AsyncMoveSuccess,
+                fail_event=AsyncMoveFail,
+                email=api.user.get_current().getProperty('email')
+            )
+            job_id = u64(job._p_oid)
+            anno = IAnnotations(self.context)
+            anno['async_move_job'] = job_id
+            portal = getToolByName(self, 'portal_url').getPortalObject()
+            portal_anno = IAnnotations(portal)
+            if not portal_anno.get('async_move_jobs'):
+                portal_anno['async_move_jobs'] = OOBTree()
+
+            annotation_job = {}
+            portal_anno['async_move_jobs'][job_id] = annotation_job
+
+            message_type = 'info'
+            message = _(u"Item added to the queue. "
+                        u"We will notify you when the job is completed")
+        except Exception, err:
+            logger.exception(err)
+            message_type = 'error'
+            message = u"Failed to add items to the sync queue"
+
+        return self._redirect(message, message_type)
+
+
+class RenameAsyncRedirect(BrowserView):
+    """ RenameAsyncRedirect
+    """
+    def __init__(self, context, request):
+        """ init
+        """
+        self.context = context
+        self.request = request
+
+    def __call__(self, *args, **kwargs):
+        """ call
+        """
+        pathName = url_quote_plus('paths:list')
+        safePath = '/'.join(self.context.getPhysicalPath())
+        orig_template = self.request['HTTP_REFERER'].split('?')[0]
+        url = '%s/@@async_rename?orig_template=%s&%s=%s' % (
+            self.context.absolute_url(),
+            orig_template,
+            pathName,
+            safePath)
+        return self.request.RESPONSE.redirect(url)
+
 
 class MoveAsyncQueueJSON(JobsJSON):
     """ queue json
