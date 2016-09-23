@@ -139,7 +139,9 @@ class RenameAsync(MoveAsync):
     def post(self, **kwargs):
         """ POST
         """
-        newid = self.request.get('__cp')
+        newids = self.request.get('new_ids')
+        newtitle = self.request.get('new_title', '')
+        paths = self.request.get('paths', '')
         if 'form.button.Cancel' in kwargs:
             return self._redirect(_(u"Paste cancelled"))
 
@@ -150,7 +152,10 @@ class RenameAsync(MoveAsync):
             job = worker.queueJobInQueue(
                 queue, (ASYNCMOVE_QUEUE,),
                 async_rename,
-                self.context, newid=newid,
+                self.context,
+                new_ids=newids,
+                new_title=newtitle,
+                paths=paths,
                 success_event=AsyncMoveSuccess,
                 fail_event=AsyncMoveFail,
                 email=api.user.get_current().getProperty('email')
