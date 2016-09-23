@@ -344,7 +344,7 @@ def async_rename(context, success_event, fail_event, **kwargs):
     """ Async rename job
     """
     newids = kwargs.get('new_ids', '')
-    newtitle = kwargs.get('new_title', '')
+    newtitles = kwargs.get('new_titles', '')
     paths = kwargs.get('paths', '')
     email = kwargs.get('email', '')
 
@@ -369,9 +369,13 @@ def async_rename(context, success_event, fail_event, **kwargs):
 
     try:
         putils = context.plone_utils
+        request_auth = kwargs.get('request_auth', None)
         request = create_request()
-        _success, failure = putils.renameObjectsByPaths(paths, newids, newtitle,
-                                                       REQUEST=request)
+        request['_authenticator'] = request_auth
+        request['method'] = 'POST'
+        _success, failure = putils.renameObjectsByPaths(paths,
+                                                        newids, newtitles,
+                                                        REQUEST=request)
         if failure:
             message = _(u'The following item(s) could not be renamed:'
                         u' ${items}.', mapping={u'items': ', '.join(

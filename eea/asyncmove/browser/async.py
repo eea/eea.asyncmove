@@ -140,7 +140,7 @@ class RenameAsync(MoveAsync):
         """ POST
         """
         newids = self.request.get('new_ids')
-        newtitle = self.request.get('new_title', '')
+        newtitles = self.request.get('new_titles', '')
         paths = self.request.get('paths', '')
         if 'form.button.Cancel' in kwargs:
             return self._redirect(_(u"Paste cancelled"))
@@ -154,7 +154,8 @@ class RenameAsync(MoveAsync):
                 async_rename,
                 self.context,
                 new_ids=newids,
-                new_title=newtitle,
+                new_titles=newtitles,
+                request_auth=self.request['_authenticator'],
                 paths=paths,
                 success_event=AsyncMoveSuccess,
                 fail_event=AsyncMoveFail,
