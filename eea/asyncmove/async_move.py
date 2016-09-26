@@ -41,9 +41,9 @@ def reindex_object(obj, recursive=0):
             ctool = getToolByName(obj, 'portal_catalog')
             ctool.reindexObject(obj)
         except Exception, err:
-            logger.warn(
-                "Couldn't reindex obj --> %s: %s",
-                getattr(obj, 'absolute_url', lambda: 'None')(), err)
+            logger.warn("Couldn't reindex obj --> %s",
+                        getattr(obj, 'absolute_url', lambda: 'None')())
+            logger.exception(err)
 
         if recursive:
             children = getattr(obj, 'objectValues', lambda: ())()

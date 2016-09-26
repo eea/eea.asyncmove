@@ -62,7 +62,15 @@
 
               <input class="destructive"
                      type="submit"
+                     value="Paste (async)"
+                     name="form.button.async"
+                     tal:condition="not:item_locked"
+                     i18n:attributes="value;"
+                     />
+              <input class="destructive"
+                     type="submit"
                      value="Paste"
+                     name="form.button.paste"
                      tal:condition="not:item_locked"
                      i18n:attributes="value;"
                      />

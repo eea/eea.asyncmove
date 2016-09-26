@@ -1,7 +1,7 @@
 /* global jQuery */
 
 jQuery(document).ready(function() {
-  var links = jQuery('body').find('a[href$="async_move_confirmation"]');
+  var links = jQuery('body').find('a[href$="paste_confirmation"]');
   links.prepOverlay({
     subtype: 'ajax',
     formselector: 'form',

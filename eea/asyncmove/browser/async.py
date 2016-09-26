@@ -74,12 +74,20 @@ class MoveAsync(BrowserView):
             self.request.response.redirect(url)
         return msg
 
+    def paste(self, **kwargs):
+        """ Paste synchronously
+        """
+        return self.request.response.redirect(
+                self.context.absolute_url() + '/object_paste')
+
     def post(self, **kwargs):
         """ POST
         """
         newid = self.request.get('__cp')
         if 'form.button.Cancel' in kwargs:
             return self._redirect(_(u"Paste cancelled"))
+        elif 'form.button.paste' in kwargs:
+            return self.paste()
 
         worker = getUtility(IAsyncService)
         queue = worker.getQueues()['']
