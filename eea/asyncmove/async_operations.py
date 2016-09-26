@@ -20,6 +20,7 @@ from ZPublisher.HTTPResponse import HTTPResponse
 from eea.asyncmove.async import ContextWrapper
 from eea.asyncmove.config import EEAMessageFactory as _
 from eea.asyncmove.events.async import AsyncMoveSaveProgress
+from eea.asyncmove.utils import renameObjectsByPaths
 from zope.annotation import IAnnotations
 from zope.event import notify
 
@@ -368,14 +369,13 @@ def async_rename(context, success_event, fail_event, **kwargs):
     )
 
     try:
-        putils = context.plone_utils
         request_auth = kwargs.get('request_auth', None)
         request = create_request()
         request['_authenticator'] = request_auth
         request['method'] = 'POST'
-        _success, failure = putils.renameObjectsByPaths(paths,
-                                                        newids, newtitles,
-                                                        REQUEST=request)
+        _success, failure = renameObjectsByPaths(context, paths,
+                                                 newids, newtitles,
+                                                 REQUEST=request)
         if failure:
             message = _(u'The following item(s) could not be renamed:'
                         u' ${items}.', mapping={u'items': ', '.join(
