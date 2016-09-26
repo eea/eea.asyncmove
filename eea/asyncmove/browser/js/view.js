@@ -2,7 +2,7 @@
 
 jQuery(document).ready(function() {
   var links = jQuery('body').find('a[href$="paste_confirmation"]');
-  links.prepOverlay({
+    links.prepOverlay({
     subtype: 'ajax',
     formselector: 'form',
     filter: '.portalMessage,#content',

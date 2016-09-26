@@ -77,8 +77,17 @@ class MoveAsync(BrowserView):
     def paste(self, **kwargs):
         """ Paste synchronously
         """
-        return self.request.response.redirect(
-                self.context.absolute_url() + '/object_paste')
+        try:
+            object_paste = self.context.restrictedTraverse('object_paste')
+            object_paste()
+        except Exception, err:
+            logger.exception(err)
+            msg = _(u"Can't paste item(s) here: %s", err)
+        else:
+            msg = _(u"Item(s) pasted.")
+
+        self.request['__cp'] = None
+        return self._redirect(msg)
 
     def post(self, **kwargs):
         """ POST
@@ -88,6 +97,8 @@ class MoveAsync(BrowserView):
             return self._redirect(_(u"Paste cancelled"))
         elif 'form.button.paste' in kwargs:
             return self.paste()
+        elif not 'form.button.async' in kwargs:
+            return self.index()
 
         worker = getUtility(IAsyncService)
         queue = worker.getQueues()['']

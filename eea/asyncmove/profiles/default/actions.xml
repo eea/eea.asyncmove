@@ -2,13 +2,13 @@
 <object name="portal_actions">
  <object name="folder_buttons">
   <object name="paste">
-  <property name="title" i18n:translate="">Paste (async)</property>
-   <property name="url_expr">python:((object.restrictedTraverse('@@plone').isDefaultPageInFolder() or not object.restrictedTraverse('@@plone').isStructuralFolder()) and object.getParentNode().absolute_url() or object_url) + '/paste_confirmation'</property>
+   <property name="title">Paste (async)</property>
+   <property name="url_expr">string:paste_confirmation:method</property>
   </object>
  </object>
  <object name="object_buttons">
   <object name="paste">
-   <property name="title" i18n:translate="">Paste (async)</property>
+   <property name="title">Paste (async)</property>
    <property name="url_expr">
     python:((object.restrictedTraverse('@@plone').isDefaultPageInFolder() or not object.restrictedTraverse('@@plone').isStructuralFolder()) and object.getParentNode().absolute_url() or object_url) + '/paste_confirmation'
    </property>
