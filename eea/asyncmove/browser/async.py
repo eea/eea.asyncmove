@@ -110,7 +110,7 @@ class MoveAsync(BrowserView):
             return self._redirect(_(u"Paste cancelled"))
         elif 'form.button.paste' in kwargs:
             return self.paste()
-        elif not 'form.button.async' in kwargs:
+        elif 'form.button.async' not in kwargs:
             return self.index()
 
         worker = getUtility(IAsyncService)

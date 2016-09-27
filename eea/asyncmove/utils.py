@@ -34,7 +34,8 @@ def renameObjectsByPaths(self, paths, new_ids, new_titles,
             change_title = new_title and title != new_title
             changed = False
             if change_title:
-                getSecurityManager().validate(obj, obj, 'setTitle', obj.setTitle)
+                getSecurityManager().validate(obj, obj, 'setTitle',
+                                              obj.setTitle)
                 obj.setTitle(new_title)
                 notify(ObjectModifiedEvent(obj))
                 changed = True
