@@ -344,10 +344,10 @@ def create_request():
 def async_rename(context, success_event, fail_event, **kwargs):
     """ Async rename job
     """
-    newids = kwargs.get('new_ids', '')
-    newtitles = kwargs.get('new_titles', '')
-    paths = kwargs.get('paths', '')
-    email = kwargs.get('email', '')
+    newids = kwargs.get('new_ids', [])
+    newtitles = kwargs.get('new_titles', [])
+    paths = kwargs.get('paths', [])
+    email = kwargs.get('email', [])
 
     anno = IAnnotations(context)
     job_id = anno.get('async_move_job')
@@ -357,14 +357,11 @@ def async_rename(context, success_event, fail_event, **kwargs):
             error=u'Invalid newid'
         )
         notify(fail_event(wrapper))
-        raise CopyError(eNoItemsSpecified)
-
-    oblist = []
+        raise ValueError(eNoItemsSpecified)
     wrapper = ContextWrapper(context)(
-        folder_move_from=oblist and aq_parent(
-            aq_inner(oblist[0])).absolute_url(),
-        folder_move_to=context.absolute_url(),
-        folder_move_objects=', '.join([obj.getId() for obj in oblist]),
+        folder_move_from=context.absolute_url(1),
+        folder_move_to=', '.join(newids),
+        folder_move_objects=', '.join(paths),
         asyncmove_email=email
     )
 
@@ -381,7 +378,7 @@ def async_rename(context, success_event, fail_event, **kwargs):
                         u' ${items}.', mapping={u'items': ', '.join(
                 failure.keys())})
             notify(fail_event(wrapper))
-            raise CopyError(MessageDialog(
+            raise ValueError(MessageDialog(
                 title='Error',
                 message=message,
                 action='manage_main',
@@ -391,7 +388,7 @@ def async_rename(context, success_event, fail_event, **kwargs):
         wrapper.job_id = job_id
 
         notify(fail_event(wrapper))
-        raise CopyError(MessageDialog(
+        raise ValueError(MessageDialog(
             title='Error',
             message=err.message,
             action='manage_main',
