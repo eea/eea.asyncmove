@@ -21,8 +21,8 @@ from Products.CMFCore.utils import getToolByName
 from plone import api
 
 from eea.asyncmove.config import EEAMessageFactory as _
-from eea.asyncmove.async_operations import async_move, JOB_PROGRESS_DETAILS
-from eea.asyncmove.async_operations import async_rename
+from eea.asyncmove.async_move import async_move, JOB_PROGRESS_DETAILS
+from eea.asyncmove.async_move import async_rename
 from eea.asyncmove.events.async import AsyncMoveSuccess, AsyncMoveFail
 from eea.asyncmove.events.async import AsyncRenameSuccess, AsyncRenameFail
 
