@@ -28,6 +28,7 @@ setup(name='eea.asyncmove',
           # -*- Extra requirements: -*-
           'plone.api',
           'plone.app.async',
+          'plone.stringinterp >= 1.0.14',
       ],
       entry_points="""
       # -*- Entry points: -*-
