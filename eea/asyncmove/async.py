@@ -17,9 +17,9 @@ from Products.CMFCore.utils import getToolByName
 from ZODB.POSException import ConflictError
 from ZPublisher.HTTPRequest import HTTPRequest
 from ZPublisher.HTTPResponse import HTTPResponse
-from eea.asyncmove.async import ContextWrapper
 from eea.asyncmove.config import EEAMessageFactory as _
 from eea.asyncmove.events.async import AsyncMoveSaveProgress
+from eea.asyncmove.interfaces import IContextWrapper
 from eea.asyncmove.utils import renameObjectsByPaths
 from zope.annotation import IAnnotations
 from zope.event import notify
@@ -45,9 +45,9 @@ def reindex_object(obj, recursive=0):
             ctool = getToolByName(obj, 'portal_catalog')
             ctool.reindexObject(obj)
         except Exception, err:
-            logger.warn(
-                "Couldn't reindex obj --> %s: %s",
-                getattr(obj, 'absolute_url', lambda: 'None')(), err)
+            logger.warn("Couldn't reindex obj --> %s",
+                        getattr(obj, 'absolute_url', lambda: 'None')())
+            logger.exception(err)
 
         if recursive:
             children = getattr(obj, 'objectValues', lambda: ())()
@@ -282,7 +282,7 @@ def async_move(context, success_event, fail_event, **kwargs):
     job_id = anno.get('async_move_job')
 
     if not newid:
-        wrapper = ContextWrapper(context)(
+        wrapper = IContextWrapper(context)(
             error=u'Invalid newid'
         )
         notify(fail_event(wrapper))
@@ -306,7 +306,7 @@ def async_move(context, success_event, fail_event, **kwargs):
 
         oblist.append(ob)
 
-    wrapper = ContextWrapper(context)(
+    wrapper = IContextWrapper(context)(
         folder_move_from=oblist and aq_parent(
             aq_inner(oblist[0])).absolute_url(),
         folder_move_to=context.absolute_url(),
@@ -353,12 +353,12 @@ def async_rename(context, success_event, fail_event, **kwargs):
     job_id = anno.get('async_move_job')
 
     if not newids:
-        wrapper = ContextWrapper(context)(
+        wrapper = IContextWrapper(context)(
             error=u'Invalid newid'
         )
         notify(fail_event(wrapper))
         raise ValueError(eNoItemsSpecified)
-    wrapper = ContextWrapper(context)(
+    wrapper = IContextWrapper(context)(
         folder_move_from=context.absolute_url(1),
         folder_move_to=', '.join(newids),
         folder_move_objects=', '.join(paths),
@@ -395,4 +395,3 @@ def async_rename(context, success_event, fail_event, **kwargs):
         ))
 
     notify(success_event(wrapper))
-

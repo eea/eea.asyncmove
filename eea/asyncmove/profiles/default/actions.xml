@@ -1,32 +1,35 @@
 <?xml version="1.0"?>
-<object name="portal_actions" meta_type="Plone Actions Tool"
-   xmlns:i18n="http://xml.zope.org/namespaces/i18n">
- <object name="folder_buttons" meta_type="CMF Action Category" insert-after="paste">
-  <object name="async_move" meta_type="CMF Action" i18n:domain="eea">
+<object name="portal_actions" xmlns:i18n="http://xml.zope.org/namespaces/i18n">
+ <object name="folder_buttons">
+  <object name="paste_async" meta_type="CMF Action" i18n:domain="eea">
    <property name="title" i18n:translate="">Paste (async)</property>
    <property name="description" i18n:translate=""></property>
-   <property name="url_expr">string:@@async_move:method</property>
-   <property name="available_expr">folder/cb_dataValid|nothing</property>
+   <property name="url_expr">string:paste_confirmation:method</property>
+   <property name="link_target"></property>
+   <property name="icon_expr"></property>
+   <property name="available_expr">folder/cb_dataValid</property>
    <property name="permissions">
-    <element value="Modify portal content"/>
+    <element value="Add portal content"/>
    </property>
    <property name="visible">True</property>
   </object>
+  <object name="paste">
+   <property name="visible">False</property>
+  </object>
  </object>
- <object name="object_buttons" meta_type="CMF Action Category">
-  <object name="async_move" meta_type="CMF Action" i18n:domain="eea" insert-after="paste">
+ <object name="object_buttons">
+  <object name="paste_async" meta_type="CMF Action" i18n:domain="eea">
    <property name="title" i18n:translate="">Paste (async)</property>
-   <property name="description" i18n:translate=""/>
-   <property name="url_expr">
-    python:((object.restrictedTraverse('@@plone').isDefaultPageInFolder() or not object.restrictedTraverse('@@plone').isStructuralFolder()) and object.getParentNode().absolute_url() or object_url) + '/@@async_move_confirmation'
-   </property>
-   <property name="link_target"/>
-   <property name="icon_expr"/>
+   <property name="description" i18n:translate=""></property>
+   <property name="url_expr">string:${globals_view/getCurrentFolderUrl}/paste_confirmation</property>
    <property name="available_expr">folder/cb_dataValid|nothing</property>
    <property name="permissions">
-    <element value="Modify portal content"/>
+    <element value="View"/>
    </property>
    <property name="visible">True</property>
+  </object>
+  <object name="paste">
+   <property name="visible">False</property>
   </object>
  </object>
 </object>

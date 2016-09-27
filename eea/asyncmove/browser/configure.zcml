@@ -32,7 +32,7 @@
      <browser:page
         for="*"
         layer=".interfaces.ILayer"
-        name="async_move_confirmation"
+        name="paste_confirmation"
         class=".async.MoveAsyncConfirmation"
         permission="cmf.ModifyPortalContent"
         template="templates/paste_confirmation.pt"

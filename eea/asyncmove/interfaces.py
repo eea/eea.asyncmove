@@ -1,8 +1,7 @@
 """ Public Interface
 """
-from zope.interface import Interface
+from plone.stringinterp.interfaces import IContextWrapper
 
-
-class IContextWrapper(Interface):
-    """ Context wrapper used by async events
-    """
+__all__ = [
+    IContextWrapper.__name__,
+]

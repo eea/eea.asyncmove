@@ -77,12 +77,41 @@ class MoveAsync(BrowserView):
             self.request.response.redirect(url)
         return msg
 
+    def _cleanup(self):
+        """ Cleanup __cp from self.request
+        """
+        if self.request is not None:
+            self.request.response.setCookie('__cp', 'deleted',
+                path='%s' % cookie_path(self.request),
+                expires='Wed, 31-Dec-97 23:59:59 GMT'
+            )
+            self.request['__cp'] = None
+
+    def paste(self, **kwargs):
+        """ Paste synchronously
+        """
+        try:
+            object_paste = self.context.restrictedTraverse('object_paste')
+            object_paste()
+        except Exception, err:
+            logger.exception(err)
+            msg = _(u"Can't paste item(s) here: %s", err)
+        else:
+            msg = _(u"Item(s) pasted.")
+
+        self._cleanup()
+        return self._redirect(msg)
+
     def post(self, **kwargs):
         """ POST
         """
         newid = self.request.get('__cp')
         if 'form.button.Cancel' in kwargs:
             return self._redirect(_(u"Paste cancelled"))
+        elif 'form.button.paste' in kwargs:
+            return self.paste()
+        elif not 'form.button.async' in kwargs:
+            return self.index()
 
         worker = getUtility(IAsyncService)
         queue = worker.getQueues()['']
@@ -111,15 +140,7 @@ class MoveAsync(BrowserView):
             message = _(u"Item added to the queue. "
                         u"We will notify you when the job is completed")
 
-            # delete __cp from the request
-            if self.request is not None:
-                self.request['RESPONSE'].setCookie(
-                    '__cp', 'deleted',
-                    path='%s' % cookie_path(self.request),
-                    expires='Wed, 31-Dec-97 23:59:59 GMT'
-                )
-                self.request['__cp'] = None
-
+            self._cleanup()
         except Exception, err:
             logger.exception(err)
             message_type = 'error'

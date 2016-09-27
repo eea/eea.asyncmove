@@ -49,12 +49,6 @@
         handler=".handlers.execute_event"
     />
 
-  <!-- Custom context -->
-  <class class="eea.asyncmove.async.ContextWrapper">
-    <implements interface="plone.contentrules.engine.interfaces.IRuleAssignable" />
-  </class>
-
-
   <!-- Content rules substitutions -->
   <adapter
     for="eea.asyncmove.interfaces.IContextWrapper"
