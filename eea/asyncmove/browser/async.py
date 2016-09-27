@@ -24,6 +24,7 @@ from eea.asyncmove.config import EEAMessageFactory as _
 from eea.asyncmove.async_operations import async_move, JOB_PROGRESS_DETAILS
 from eea.asyncmove.async_operations import async_rename
 from eea.asyncmove.events.async import AsyncMoveSuccess, AsyncMoveFail
+from eea.asyncmove.events.async import AsyncRenameSuccess, AsyncRenameFail
 
 logger = logging.getLogger('eea.asyncmove')
 ASYNCMOVE_QUEUE = 'asyncmove'
@@ -157,8 +158,8 @@ class RenameAsync(MoveAsync):
                 new_titles=newtitles,
                 request_auth=self.request['_authenticator'],
                 paths=paths,
-                success_event=AsyncMoveSuccess,
-                fail_event=AsyncMoveFail,
+                success_event=AsyncRenameSuccess,
+                fail_event=AsyncRenameFail,
                 email=api.user.get_current().getProperty('email')
             )
             job_id = u64(job._p_oid)
