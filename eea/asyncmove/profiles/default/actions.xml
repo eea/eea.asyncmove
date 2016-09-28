@@ -13,6 +13,16 @@
    </property>
    <property name="visible">True</property>
   </object>
+  <object name="rename_async" meta_type="CMF Action" i18n:domain="eea">
+   <property name="title" i18n:translate="">Rename (async)</property>
+   <property name="description" i18n:translate=""></property>
+   <property name="url_expr">string:${object_url}/@@async_rename_redirect</property>
+   <property name="available_expr">python:checkPermission("Delete objects", globals_view.getParentObject()) and checkPermission("Copy or Move", object) and checkPermission("Delete portal content", object) and checkPermission("Add portal content", object) and not globals_view.isPortalOrPortalDefaultPage()</property>
+   <property name="permissions">
+    <element value="View"/>
+   </property>
+   <property name="visible">True</property>
+  </object>
   <object name="paste">
    <property name="visible">False</property>
   </object>
@@ -23,6 +33,20 @@
    <property name="description" i18n:translate=""></property>
    <property name="url_expr">string:${globals_view/getCurrentFolderUrl}/paste_confirmation</property>
    <property name="available_expr">folder/cb_dataValid|nothing</property>
+   <property name="permissions">
+    <element value="View"/>
+   </property>
+   <property name="visible">True</property>
+  </object>
+  <object name="paste">
+   <property name="visible">False</property>
+  </object>
+
+  <object name="rename_async" meta_type="CMF Action" i18n:domain="eea">
+   <property name="title" i18n:translate="">Rename (async)</property>
+   <property name="description" i18n:translate=""></property>
+   <property name="url_expr">string:${object_url}/@@async_rename_redirect</property>
+   <property name="available_expr">python:checkPermission("Delete objects", globals_view.getParentObject()) and checkPermission("Copy or Move", object) and checkPermission("Delete portal content", object) and checkPermission("Add portal content", object) and not globals_view.isPortalOrPortalDefaultPage()</property>
    <property name="permissions">
     <element value="View"/>
    </property>
