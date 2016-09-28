@@ -23,6 +23,7 @@
    <property name="description" i18n:translate=""></property>
    <property name="url_expr">string:${globals_view/getCurrentFolderUrl}/paste_confirmation</property>
    <property name="available_expr">folder/cb_dataValid|nothing</property>
+   <property name="icon_expr">string:$portal_url/paste_icon.png</property>
    <property name="permissions">
     <element value="View"/>
    </property>
