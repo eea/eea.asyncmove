@@ -33,3 +33,24 @@ def remove_content_rules(portal):
             del storage[i]
 
 
+def remove_request_from_content_rules_conditions(portal):
+    """ Change conditions to use absolute_url instead of request
+    """
+    logger.info("Starting check of content rules tales expression")
+    storage = queryUtility(IRuleStorage)
+    if not storage:
+        return
+    rules = storage.values()
+    for rule in rules:
+        conditions = rule.conditions
+        for condition in conditions:
+            if len(condition) > 1:
+                condition = condition[0]
+            tales = getattr(condition, 'tales_expression', None)
+            if tales:
+                if 'REQUEST.URL' in tales:
+                    logging.warn('changing tales expression %s', tales)
+                    condition.tales_expression = tales.replace(
+                                'REQUEST.URL', 'absolute_url')
+                    logging.warn('tales expression changed to %s',
+                                 condition.tales_expression)
