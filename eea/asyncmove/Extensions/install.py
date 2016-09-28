@@ -17,6 +17,15 @@ def uninstall(portal, reinstall=False):
         return "Ran all uninstall steps."
 
 
+ def install(portal):
+    """ Install profile setup
+    """
+    setup_tool = getToolByName(portal, 'portal_setup')
+    setup_tool.runAllImportStepsFromProfile('profile-eea.asyncmove:default')
+    remove_request_from_content_rules_conditions(portal)
+    return "Ran all uninstall steps."
+
+
 def remove_content_rules(portal):
     """ Remove content rules on uninstall
     """
@@ -49,8 +58,9 @@ def remove_request_from_content_rules_conditions(portal):
             tales = getattr(condition, 'tales_expression', None)
             if tales:
                 if 'REQUEST.URL' in tales:
-                    logging.warn('changing tales expression %s', tales)
+                    logging.warn('changing %s tales expression %s', rule.id, 
+                        tales)
                     condition.tales_expression = tales.replace(
-                                'REQUEST.URL', 'absolute_url')
-                    logging.warn('tales expression changed to %s',
-                                 condition.tales_expression)
+                                'REQUEST.URL', 'absolute_url()')
+                    logging.warn('%s tales expression changed to %s',
+                                 rule.id, condition.tales_expression)
