@@ -49,6 +49,10 @@ def reindex_object(obj, recursive=0):
                         getattr(obj, 'absolute_url', lambda: 'None')())
             logger.exception(err)
 
+        # No need to reindex Topic criteria
+        if getattr(obj, 'portal_type', None) in ('Topic', 'Collection'):
+            return
+
         if recursive:
             children = getattr(obj, 'objectValues', lambda: ())()
             for child in children:
