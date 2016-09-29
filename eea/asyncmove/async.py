@@ -335,9 +335,9 @@ def create_request():
     """
     # Create a request to work with
     response = HTTPResponse(stdout=sys.stdout)
-    env = {'SERVER_NAME':'fake_server',
-           'SERVER_PORT':'80',
-           'REQUEST_METHOD':'GET'}
+    env = {'SERVER_NAME': 'fake_server',
+           'SERVER_PORT': '80',
+           'REQUEST_METHOD': 'GET'}
     return HTTPRequest(sys.stdin, env, response)
 
 
@@ -375,8 +375,8 @@ def async_rename(context, success_event, fail_event, **kwargs):
                                                  REQUEST=request)
         if failure:
             message = _(u'The following item(s) could not be renamed:'
-                        u' ${items}.', mapping={u'items': ', '.join(
-                failure.keys())})
+                        u' ${items}.',
+                        mapping={u'items': ', '.join(failure.keys())})
             notify(fail_event(wrapper))
             raise ValueError(MessageDialog(
                 title='Error',

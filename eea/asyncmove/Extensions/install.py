@@ -4,6 +4,9 @@ from Products.CMFCore.utils import getToolByName
 from plone.app.contentrules import api
 from plone.contentrules.engine.interfaces import IRuleStorage
 from zope.component import queryUtility
+import logging
+
+log = logging.getLogger(__name__)
 
 
 def uninstall(portal, reinstall=False):
@@ -17,7 +20,7 @@ def uninstall(portal, reinstall=False):
         return "Ran all uninstall steps."
 
 
- def install(portal):
+def install(portal):
     """ Install profile setup
     """
     setup_tool = getToolByName(portal, 'portal_setup')
@@ -45,7 +48,7 @@ def remove_content_rules(portal):
 def remove_request_from_content_rules_conditions(portal):
     """ Change conditions to use absolute_url instead of request
     """
-    logger.info("Starting check of content rules tales expression")
+    log.info("Starting check of content rules tales expression")
     storage = queryUtility(IRuleStorage)
     if not storage:
         return
@@ -58,9 +61,9 @@ def remove_request_from_content_rules_conditions(portal):
             tales = getattr(condition, 'tales_expression', None)
             if tales:
                 if 'REQUEST.URL' in tales:
-                    logging.warn('changing %s tales expression %s', rule.id, 
-                        tales)
+                    log.warn('changing %s tales expression %s', rule.id,
+                             tales)
                     condition.tales_expression = tales.replace(
-                                'REQUEST.URL', 'absolute_url()')
-                    logging.warn('%s tales expression changed to %s',
-                                 rule.id, condition.tales_expression)
+                        'REQUEST.URL', 'absolute_url()')
+                    log.warn('%s tales expression changed to %s',
+                             rule.id, condition.tales_expression)

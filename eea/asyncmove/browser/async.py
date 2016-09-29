@@ -175,12 +175,12 @@ class RenameAsync(MoveAsync):
                 queue, (ASYNCMOVE_QUEUE,),
                 async_rename,
                 self.context,
+                success_event=AsyncRenameSuccess,
+                fail_event=AsyncRenameFail,
                 new_ids=newids,
                 new_titles=newtitles,
                 request_auth=self.request['_authenticator'],
                 paths=paths,
-                success_event=AsyncRenameSuccess,
-                fail_event=AsyncRenameFail,
                 email=api.user.get_current().getProperty('email')
             )
             job_id = u64(job._p_oid)
