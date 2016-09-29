@@ -13,7 +13,7 @@
    </property>
    <property name="visible">True</property>
   </object>
-  <object name="rename_async" meta_type="CMF Action" i18n:domain="eea">
+  <object name="rename_async" meta_type="CMF Action" i18n:domain="eea" insert-after="rename">
    <property name="title" i18n:translate="">Rename (async)</property>
    <property name="description" i18n:translate=""></property>
    <property name="url_expr">string:${object_url}/@@async_rename_redirect</property>
@@ -43,7 +43,7 @@
    <property name="visible">False</property>
   </object>
 
-  <object name="rename_async" meta_type="CMF Action" i18n:domain="eea">
+  <object name="rename_async" meta_type="CMF Action" i18n:domain="eea" insert-after="rename">
    <property name="title" i18n:translate="">Rename (async)</property>
    <property name="description" i18n:translate=""></property>
    <property name="url_expr">string:${object_url}/@@async_rename_redirect</property>
