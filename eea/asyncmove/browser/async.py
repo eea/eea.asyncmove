@@ -179,7 +179,6 @@ class RenameAsync(MoveAsync):
                 fail_event=AsyncRenameFail,
                 new_ids=newids,
                 new_titles=newtitles,
-                request_auth=self.request['_authenticator'],
                 paths=paths,
                 email=api.user.get_current().getProperty('email')
             )

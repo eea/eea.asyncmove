@@ -3,7 +3,6 @@
 from AccessControl import getSecurityManager
 
 import transaction
-from AccessControl.requestmethod import postonly
 from Acquisition._Acquisition import aq_parent, aq_inner
 from Products.Archetypes.utils import transaction_note
 from Products.CMFCore.utils import getToolByName
@@ -68,4 +67,3 @@ def renameObjectsByPaths(self, paths, new_ids, new_titles,
     transaction_note('Renamed %s' % str(success.keys()))
     return success, failure
 
-renameObjectsByPaths = postonly(renameObjectsByPaths)
