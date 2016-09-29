@@ -25,7 +25,6 @@ def install(portal):
     """
     setup_tool = getToolByName(portal, 'portal_setup')
     setup_tool.runAllImportStepsFromProfile('profile-eea.asyncmove:default')
-    remove_request_from_content_rules_conditions(portal)
     return "Ran all uninstall steps."
 
 
@@ -43,27 +42,3 @@ def remove_content_rules(portal):
         if found:
             api.unassign_rule(portal, i)
             del storage[i]
-
-
-def remove_request_from_content_rules_conditions(portal):
-    """ Change conditions to use absolute_url instead of request
-    """
-    log.info("Starting check of content rules tales expression")
-    storage = queryUtility(IRuleStorage)
-    if not storage:
-        return
-    rules = storage.values()
-    for rule in rules:
-        conditions = rule.conditions
-        for condition in conditions:
-            if len(condition) > 1:
-                condition = condition[0]
-            tales = getattr(condition, 'tales_expression', None)
-            if tales:
-                if 'REQUEST.URL' in tales:
-                    log.warn('changing %s tales expression %s', rule.id,
-                             tales)
-                    condition.tales_expression = tales.replace(
-                        'REQUEST.URL', 'absolute_url()')
-                    log.warn('%s tales expression changed to %s',
-                             rule.id, condition.tales_expression)

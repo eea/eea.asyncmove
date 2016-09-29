@@ -60,5 +60,13 @@
         permission="cmf.ModifyPortalContent"
         template="templates/queue.pt"
     />
+    
+    <browser:page
+        for="*"
+        layer=".interfaces.ILayer"
+        name="cleanup_request_from_content_rules"
+        class=".async.ContentRuleCleanup"
+        permission="cmf.ManagePortal"
+    />
 
 </configure>

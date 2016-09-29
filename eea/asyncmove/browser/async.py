@@ -9,8 +9,10 @@ from Products.PythonScripts.standard import url_quote_plus
 from Products.statusmessages.interfaces import IStatusMessage
 from plone.app.async.interfaces import IAsyncService
 from plone.app.async.browser.queue import JobsJSON
+from plone.contentrules.engine.interfaces import IRuleStorage
 from zope.annotation import IAnnotations
 from zope.component import getUtility
+from zope.component import queryUtility
 from zc.async.utils import custom_repr
 from ZODB.utils import u64
 from ZODB.POSException import ConflictError
@@ -388,3 +390,37 @@ jQuery(function($) {
   update();
 });
 """ % {'seconds': timeout/1000, 'timeout': timeout}
+
+
+class ContentRuleCleanup(BrowserView):
+    """ ContentRuleCleanup
+    """
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        
+    def __call__(self):
+        """ Change conditions to use absolute_url instead of request
+        """
+        log = logging
+        log.info("Starting check of content rules tales expression")
+        storage = queryUtility(IRuleStorage)
+        if not storage:
+            return
+        rules = storage.values()
+        result = ["Removing request from content rules tales expressions:"]
+        for rule in rules:
+            conditions = rule.conditions
+            for condition in conditions:
+                if len(condition) > 1:
+                    condition = condition[0]
+                tales = getattr(condition, 'tales_expression', None)
+                if tales:
+                    if 'REQUEST.URL' in tales:
+                        condition.tales_expression = tales.replace(
+                            'REQUEST.URL', 'absolute_url()')
+                        wmsg = '%s tales expression changed from %s --> %s' % (
+                                    rule.id, tales, condition.tales_expression)
+                        log.warn(wmsg)
+                        result.append(wmsg)
+        return "\n".join(result)
