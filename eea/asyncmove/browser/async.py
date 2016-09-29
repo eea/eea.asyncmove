@@ -398,7 +398,7 @@ class ContentRuleCleanup(BrowserView):
     def __init__(self, context, request):
         self.context = context
         self.request = request
-        
+
     def __call__(self):
         """ Change conditions to use absolute_url instead of request
         """
@@ -416,10 +416,11 @@ class ContentRuleCleanup(BrowserView):
                     condition = condition[0]
                 tales = getattr(condition, 'tales_expression', None)
                 if tales:
+                    log.info("%s rule has '%s' tales expression", rule.id, tales)
                     if 'REQUEST.URL' in tales:
                         condition.tales_expression = tales.replace(
                             'REQUEST.URL', 'absolute_url()')
-                        wmsg = '%s tales expression changed from %s --> %s' % (
+                        wmsg = "'%s' tales expression changed from '%s' --> '%s'" % (
                                     rule.id, tales, condition.tales_expression)
                         log.warn(wmsg)
                         result.append(wmsg)

@@ -10,12 +10,19 @@ from Products.CMFPlone.utils import getDefaultPage
 from ZODB.POSException import ConflictError
 from zope.event import notify
 from zope.lifecycleevent import ObjectModifiedEvent
+from AccessControl import getSecurityManager
+from AccessControl import Unauthorized
 
 
 def renameObjectsByPaths(self, paths, new_ids, new_titles,
                          handle_errors=True, REQUEST=None):
     """ CMFPlone override
     """
+    smanager = getSecurityManager()
+    obj = self
+    if not smanager.checkPermission('Delete objects', obj) and not \
+                        smanager.checkPermission('Copy or Move', obj):
+        return Unauthorized("You may not modify this object")
     failure = {}
     success = {}
     # use the portal for traversal in case we have relative paths
