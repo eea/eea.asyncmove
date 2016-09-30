@@ -23,9 +23,24 @@ from eea.asyncmove.interfaces import IContextWrapper
 from eea.asyncmove.utils import renameObjectsByPaths
 from zope.annotation import IAnnotations
 from zope.event import notify
+from zope.interface import implementer
+from Acquisition import Implicit
 
 logger = logging.getLogger('eea.asyncmove')
 
+
+# Custom context
+@implementer(IContextWrapper)
+class ContextWrapper(Implicit):
+    """ Context wrapper
+    """
+    def __init__(self, context):
+        self.context = context
+
+    def __call__(self, *args, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        return self.__of__(self.context)
 
 JOB_PROGRESS_DETAILS = {
     25: 'Uncatalog and delete objects under old position',
@@ -286,7 +301,7 @@ def async_move(context, success_event, fail_event, **kwargs):
     job_id = anno.get('async_move_job')
 
     if not newid:
-        wrapper = IContextWrapper(context)(
+        wrapper = ContextWrapper(context)(
             error=u'Invalid newid'
         )
         notify(fail_event(wrapper))
@@ -310,7 +325,7 @@ def async_move(context, success_event, fail_event, **kwargs):
 
         oblist.append(ob)
 
-    wrapper = IContextWrapper(context)(
+    wrapper = ContextWrapper(context)(
         folder_move_from=oblist and aq_parent(
             aq_inner(oblist[0])).absolute_url(),
         folder_move_to=context.absolute_url(),
@@ -352,21 +367,21 @@ def async_rename(context, success_event, fail_event, **kwargs):
     newtitles = kwargs.get('new_titles', [])
     paths = kwargs.get('paths', [])
     email = kwargs.get('email', [])
-
     anno = IAnnotations(context)
     job_id = anno.get('async_move_job')
 
     if not newids:
-        wrapper = IContextWrapper(context)(
+        wrapper = ContextWrapper(context)(
             error=u'Invalid newid'
         )
         notify(fail_event(wrapper))
         raise ValueError(eNoItemsSpecified)
-    wrapper = IContextWrapper(context)(
+    wrapper = ContextWrapper(context)(
         folder_move_from=context.absolute_url(1),
         folder_move_to=', '.join(newids),
         folder_move_objects=', '.join(paths),
-        asyncmove_email=email
+        asyncmove_email=email,
+        email=email
     )
 
     try:
