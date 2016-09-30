@@ -220,13 +220,18 @@ class RenameAsyncRedirect(BrowserView):
         """ call
         """
         pathName = url_quote_plus('paths:list')
-        safePath = '/'.join(self.context.getPhysicalPath())
+        safePath = self.request.get('paths') or '/'.join(
+            self.context.getPhysicalPath())
+        initial = "&" + pathName + "="
+        res = []
+        for value in safePath:
+            res.append(initial + value)
+        output = "".join(res)
         orig_template = self.request['HTTP_REFERER'].split('?')[0]
-        url = '%s/@@async_rename?orig_template=%s&%s=%s' % (
+        url = '%s/@@async_rename?orig_template=%s%s' % (
             self.context.absolute_url(),
             orig_template,
-            pathName,
-            safePath)
+            output)
         return self.request.RESPONSE.redirect(url)
 
 
