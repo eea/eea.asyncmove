@@ -220,8 +220,8 @@ class RenameAsyncRedirect(BrowserView):
         """ call
         """
         pathName = url_quote_plus('paths:list')
-        safePath = self.request.get('paths') or '/'.join(
-            self.context.getPhysicalPath())
+        safePath = self.request.get('paths') or ['/'.join(
+            self.context.getPhysicalPath())]
         initial = "&" + pathName + "="
         res = []
         for value in safePath:
