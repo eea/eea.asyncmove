@@ -3,6 +3,7 @@
 import sys
 import logging
 from cgi import escape
+from plone.uuid.interfaces import IUUID
 from Acquisition._Acquisition import aq_inner, aq_base
 from Acquisition._Acquisition import aq_parent
 from OFS.CopySupport import CopyError, eNoData, _cb_decode
@@ -30,29 +31,82 @@ JOB_PROGRESS_DETAILS = {
     100: 'Completed',
 }
 
+def uncatalog_object(obj, catalog):
+    """ Remove object from catalog
+    """
+    ctool = getToolByName(obj, catalog, None)
+    if not ctool:
+        return
+
+    brains = ctool(UID=IUUID(obj))
+    for brain in brains:
+        ctool.uncatalog_object(brain.getPath())
+
+
+def unindex_object(obj, recursive=0):
+    """ Unindex the given object
+
+    If 'recursive' is true then also take unindex of all sub-objects.
+    """
+    if not IBaseObject.providedBy(obj):
+        return
+
+    try:
+        obj.unindexObject()
+        uncatalog_object(obj, 'uid_catalog')
+        uncatalog_object(obj, 'reference_catalog')
+
+        # Also unindex AT References
+        if hasattr(obj, 'at_references'):
+            refs = getattr(obj.at_references, 'objectValues', lambda: ())()
+            for ref in refs:
+                ref.unindexObject()
+                uncatalog_object(ref, 'uid_catalog')
+                uncatalog_object(ref, 'reference_catalog')
+    except Exception, err:
+        logger.warn("Couldn't unindex obj --> %s",
+                    getattr(obj, 'absolute_url', lambda: 'None')())
+        logger.exception(err)
+
+    # No need to unindex Topic criteria
+    if getattr(obj, 'portal_type', None) in ('Topic', 'Collection'):
+        return
+
+    if recursive:
+        children = getattr(obj, 'objectValues', lambda: ())()
+        for child in children:
+            reindex_object(child, recursive)
+
 
 def reindex_object(obj, recursive=0):
     """reindex the given object.
 
     If 'recursive' is true then also take reindex of all sub-objects.
     """
-    if IBaseObject.providedBy(obj):
-        try:
-            ctool = getToolByName(obj, 'portal_catalog')
-            ctool.reindexObject(obj)
-        except Exception, err:
-            logger.warn("Couldn't reindex obj --> %s",
-                        getattr(obj, 'absolute_url', lambda: 'None')())
-            logger.exception(err)
+    if not IBaseObject.providedBy(obj):
+        return
 
-        # No need to reindex Topic criteria
-        if getattr(obj, 'portal_type', None) in ('Topic', 'Collection'):
-            return
+    try:
+        obj.reindexObject()
 
-        if recursive:
-            children = getattr(obj, 'objectValues', lambda: ())()
-            for child in children:
-                reindex_object(child, recursive)
+        # Also reindex AT References
+        if hasattr(obj, 'at_references'):
+            refs = getattr(obj.at_references, 'objectValues', lambda: ())()
+            for ref in refs:
+                ref.reindexObject()
+    except Exception, err:
+        logger.warn("Couldn't reindex obj --> %s",
+                    getattr(obj, 'absolute_url', lambda: 'None')())
+        logger.exception(err)
+
+    # No need to reindex Topic criteria
+    if getattr(obj, 'portal_type', None) in ('Topic', 'Collection'):
+        return
+
+    if recursive:
+        children = getattr(obj, 'objectValues', lambda: ())()
+        for child in children:
+            reindex_object(child, recursive)
 
 
 def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
@@ -188,6 +242,7 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
                 oid = self._get_id(orig_id)
             result.append({'id': orig_id, 'new_id': oid})
 
+            unindex_object(ob, recursive=1)
             # try to make ownership explicit so that it gets carried
             # along to the new location if needed.
             ob.manage_changeOwnershipType(explicit=1)
