@@ -17,6 +17,7 @@ from ZPublisher.HTTPRequest import HTTPRequest
 from ZPublisher.HTTPResponse import HTTPResponse
 from zope import event
 from zope.annotation import IAnnotations
+from zope.component.hooks import getSite
 from eea.asyncmove.interfaces import IContextWrapper
 from Products.Archetypes.interfaces.base import IBaseObject
 from App.Dialogs import MessageDialog
@@ -31,16 +32,34 @@ JOB_PROGRESS_DETAILS = {
     100: 'Completed',
 }
 
-def uncatalog_object(obj, catalog):
+
+def catalogs():
+    """
+    :return: All registered catalogs within site
+    """
+    site = getSite()
+    return site.objectValues(['ZCatalog', 'Plone Catalog Tool'])
+
+
+def uncatalog_object(obj):
     """ Remove object from catalog
     """
-    ctool = getToolByName(obj, catalog, None)
-    if not ctool:
-        return
+    for catalog in catalogs():
+        brains = catalog(UID=IUUID(obj))
+        for brain in brains:
+            catalog.uncatalog_object(brain.getPath())
 
-    brains = ctool(UID=IUUID(obj))
-    for brain in brains:
-        ctool.uncatalog_object(brain.getPath())
+
+def catalog_object(obj):
+    """ Add object to catalog
+    """
+    for catalog in catalogs():
+        url = obj.getPhysicalPath()
+        if catalog.meta_type == 'ZCatalog':
+            site_url = getSite().getPhysicalPath()
+            url = url[len(site_url):]
+        url = '/'.join(url)
+        catalog.catalog_object(obj, uid=url)
 
 
 def unindex_object(obj, recursive=0):
@@ -52,17 +71,13 @@ def unindex_object(obj, recursive=0):
         return
 
     try:
-        obj.unindexObject()
-        uncatalog_object(obj, 'uid_catalog')
-        uncatalog_object(obj, 'reference_catalog')
+        uncatalog_object(obj)
 
         # Also unindex AT References
         if hasattr(obj, 'at_references'):
             refs = getattr(obj.at_references, 'objectValues', lambda: ())()
             for ref in refs:
-                ref.unindexObject()
-                uncatalog_object(ref, 'uid_catalog')
-                uncatalog_object(ref, 'reference_catalog')
+                uncatalog_object(ref)
     except Exception, err:
         logger.warn("Couldn't unindex obj --> %s",
                     getattr(obj, 'absolute_url', lambda: 'None')())
@@ -75,7 +90,7 @@ def unindex_object(obj, recursive=0):
     if recursive:
         children = getattr(obj, 'objectValues', lambda: ())()
         for child in children:
-            reindex_object(child, recursive)
+            unindex_object(child, recursive)
 
 
 def reindex_object(obj, recursive=0):
@@ -87,13 +102,12 @@ def reindex_object(obj, recursive=0):
         return
 
     try:
-        obj.reindexObject()
-
+        catalog_object(obj)
         # Also reindex AT References
         if hasattr(obj, 'at_references'):
             refs = getattr(obj.at_references, 'objectValues', lambda: ())()
             for ref in refs:
-                ref.reindexObject()
+                catalog_object(ref)
     except Exception, err:
         logger.warn("Couldn't reindex obj --> %s",
                     getattr(obj, 'absolute_url', lambda: 'None')())
