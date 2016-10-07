@@ -454,6 +454,7 @@ def async_rename(context, success_event, fail_event, **kwargs):
                 action='manage_main',
             ))
     except Exception, err:
+        logger.exception(err)
         wrapper.error = err.message
         wrapper.job_id = job_id
 
