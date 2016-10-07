@@ -2,6 +2,7 @@
 """
 import logging
 import sys
+from Acquisition import Implicit
 from cgi import escape
 
 from Acquisition._Acquisition import aq_inner, aq_base
@@ -21,10 +22,11 @@ from eea.asyncmove.config import EEAMessageFactory as _
 from eea.asyncmove.events.async import AsyncMoveSaveProgress
 from eea.asyncmove.interfaces import IContextWrapper
 from eea.asyncmove.utils import renameObjectsByPaths
+from plone.uuid.interfaces import IUUID
 from zope.annotation import IAnnotations
+from zope.component.hooks import getSite
 from zope.event import notify
 from zope.interface import implementer
-from Acquisition import Implicit
 
 logger = logging.getLogger('eea.asyncmove')
 
@@ -50,28 +52,94 @@ JOB_PROGRESS_DETAILS = {
 }
 
 
+def catalogs():
+    """
+    :return: All registered catalogs within site
+    """
+    site = getSite()
+    return site.objectValues(['ZCatalog', 'Plone Catalog Tool'])
+
+
+def uncatalog_object(obj):
+    """ Remove object from catalog
+    """
+    for catalog in catalogs():
+        brains = catalog(UID=IUUID(obj))
+        for brain in brains:
+            catalog.uncatalog_object(brain.getPath())
+
+
+def catalog_object(obj):
+    """ Add object to catalog
+    """
+    for catalog in catalogs():
+        url = obj.getPhysicalPath()
+        if catalog.meta_type == 'ZCatalog':
+            site_url = getSite().getPhysicalPath()
+            url = url[len(site_url):]
+        url = '/'.join(url)
+        catalog.catalog_object(obj, uid=url)
+
+
+def unindex_object(obj, recursive=0):
+    """ Unindex the given object
+
+    If 'recursive' is true then also take unindex of all sub-objects.
+    """
+    if not IBaseObject.providedBy(obj):
+        return
+
+    try:
+        uncatalog_object(obj)
+
+        # Also unindex AT References
+        if hasattr(obj, 'at_references'):
+            refs = getattr(obj.at_references, 'objectValues', lambda: ())()
+            for ref in refs:
+                uncatalog_object(ref)
+    except Exception, err:
+        logger.warn("Couldn't unindex obj --> %s",
+                    getattr(obj, 'absolute_url', lambda: 'None')())
+        logger.exception(err)
+
+    # No need to unindex Topic criteria
+    if getattr(obj, 'portal_type', None) in ('Topic', 'Collection'):
+        return
+
+    if recursive:
+        children = getattr(obj, 'objectValues', lambda: ())()
+        for child in children:
+            unindex_object(child, recursive)
+
+
 def reindex_object(obj, recursive=0):
     """reindex the given object.
 
     If 'recursive' is true then also take reindex of all sub-objects.
     """
-    if IBaseObject.providedBy(obj):
-        try:
-            ctool = getToolByName(obj, 'portal_catalog')
-            ctool.reindexObject(obj)
-        except Exception, err:
-            logger.warn("Couldn't reindex obj --> %s",
-                        getattr(obj, 'absolute_url', lambda: 'None')())
-            logger.exception(err)
+    if not IBaseObject.providedBy(obj):
+        return
 
-        # No need to reindex Topic criteria
-        if getattr(obj, 'portal_type', None) in ('Topic', 'Collection'):
-            return
+    try:
+        catalog_object(obj)
+        # Also reindex AT References
+        if hasattr(obj, 'at_references'):
+            refs = getattr(obj.at_references, 'objectValues', lambda: ())()
+            for ref in refs:
+                catalog_object(ref)
+    except Exception, err:
+        logger.warn("Couldn't reindex obj --> %s",
+                    getattr(obj, 'absolute_url', lambda: 'None')())
+        logger.exception(err)
 
-        if recursive:
-            children = getattr(obj, 'objectValues', lambda: ())()
-            for child in children:
-                reindex_object(child, recursive)
+    # No need to reindex Topic criteria
+    if getattr(obj, 'portal_type', None) in ('Topic', 'Collection'):
+        return
+
+    if recursive:
+        children = getattr(obj, 'objectValues', lambda: ())()
+        for child in children:
+            reindex_object(child, recursive)
 
 
 def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
@@ -203,6 +271,7 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
                 oid = self._get_id(orig_id)
             result.append({'id': orig_id, 'new_id': oid})
 
+            unindex_object(ob, recursive=1)
             # try to make ownership explicit so that it gets carried
             # along to the new location if needed.
             ob.manage_changeOwnershipType(explicit=1)
