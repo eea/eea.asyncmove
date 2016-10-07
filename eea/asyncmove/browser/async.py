@@ -179,7 +179,6 @@ class RenameAsync(MoveAsync):
                 self.context,
                 new_ids=newids,
                 new_titles=newtitles,
-                request_auth=self.request['_authenticator'],
                 paths=paths,
                 success_event=AsyncRenameSuccess,
                 fail_event=AsyncRenameFail,
@@ -422,11 +421,12 @@ class ContentRuleCleanup(BrowserView):
                     condition = condition[0]
                 tales = getattr(condition, 'tales_expression', None)
                 if tales:
-                    log.info("%s rule has '%s' tales expression", rule.id, tales)
+                    log.info("%s rule has '%s' tales_expression", rule.id,
+                             tales)
                     if 'REQUEST.URL' in tales:
                         condition.tales_expression = tales.replace(
                             'REQUEST.URL', 'absolute_url()')
-                        wmsg = "'%s' tales expression changed from '%s' --> '%s'" % (
+                        wmsg = "'%s' tales_expression changed '%s' --> '%s'" % (
                                     rule.id, tales, condition.tales_expression)
                         log.warn(wmsg)
                         result.append(wmsg)
