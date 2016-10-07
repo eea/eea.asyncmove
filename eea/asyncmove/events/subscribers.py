@@ -57,8 +57,10 @@ def saveJobProgress(event):
             annotation_job['sub_progress'][oid]['progress'] = 0
             annotation_job['sub_progress'][oid]['title'] = title
 
-    if  event.operation == 'sub_progress':
+    if event.operation == 'sub_progress':
         obj_id = event.obj_id
+        annotation_job.setdefault('sub_progress', {})
+        annotation_job['sub_progress'].setdefault(obj_id, {})
         annotation_job['sub_progress'][obj_id]['progress'] = event.progress
 
     if event.operation == 'progress':

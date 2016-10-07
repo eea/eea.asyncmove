@@ -11,7 +11,7 @@ class FolderMoveFrom(BaseSubstitution):
     def safe_call(self):
         """ Safe call
         """
-        return getattr(self.context, 'folder_move_from', '')
+        return getattr(self.wrapper, 'folder_move_from', '')
 
 class FolderMoveTo(BaseSubstitution):
     """ Move folder to substitution
@@ -22,7 +22,7 @@ class FolderMoveTo(BaseSubstitution):
     def safe_call(self):
         """ Safe call
         """
-        return getattr(self.context, 'folder_move_to', '')
+        return getattr(self.wrapper, 'folder_move_to', '')
 
 class FolderMoveObjects(BaseSubstitution):
     """ Move folder objects substitution
@@ -33,7 +33,7 @@ class FolderMoveObjects(BaseSubstitution):
     def safe_call(self):
         """ Safe call
         """
-        return getattr(self.context, 'folder_move_objects', '')
+        return getattr(self.wrapper, 'folder_move_objects', '')
 
 class FolderMoveEmail(BaseSubstitution):
     """ Move folder email substitution
@@ -44,7 +44,7 @@ class FolderMoveEmail(BaseSubstitution):
     def safe_call(self):
         """ Safe call
         """
-        return getattr(self.context, 'asyncmove_email', '')
+        return getattr(self.wrapper, 'asyncmove_email', '')
 
 
 class AsyncMoveError(BaseSubstitution):
@@ -56,7 +56,7 @@ class AsyncMoveError(BaseSubstitution):
     def safe_call(self):
         """ Safe call
         """
-        return getattr(self.context, 'error', '')
+        return getattr(self.wrapper, 'error', '')
 
 
 class AsyncMoveJobID(BaseSubstitution):
@@ -68,4 +68,4 @@ class AsyncMoveJobID(BaseSubstitution):
     def safe_call(self):
         """ Safe call
         """
-        return getattr(self.context, 'job_id', '')
+        return getattr(self.wrapper, 'job_id', '')

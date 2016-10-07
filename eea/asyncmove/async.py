@@ -405,6 +405,8 @@ def async_move(context, success_event, fail_event, **kwargs):
     try:
         manage_pasteObjects_no_events(context, cb_copy_data=newid)
     except Exception, err:
+        logger.exception(err)
+
         wrapper.error = err.message
         wrapper.job_id = job_id
 
