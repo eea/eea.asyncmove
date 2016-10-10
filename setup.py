@@ -3,7 +3,7 @@ import os
 
 NAME = 'eea.asyncmove'
 PATH = NAME.split('.') + ['version.txt']
-VERSION = open(join(*PATH)).read().strip()
+VERSION = open(os.path.join(*PATH)).read().strip()
 
 setup(name=NAME,
       version=VERSION,
