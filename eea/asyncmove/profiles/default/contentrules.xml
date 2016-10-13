@@ -1,47 +1,93 @@
 <?xml version="1.0"?>
 <contentrules>
- <rule name="eea-asyncmove-rule-fail" title="Async move failed" cascading="False"
-    description="Notify the person who requested to move folder that move failed."
-    enabled="True" event="eea.asyncmove.events.interfaces.IAsyncMoveFail"
-    stop-after="False">
-  <conditions/>
-  <actions>
-   <action type="plone.actions.Mail">
-    <property name="source"/>
-    <property
-       name="message">Our apologies, your request to move ${folder_move_objects} from ${folder_move_from} to ${folder_move_to} failed.
+    <rule name="eea-asyncmove-rule-fail" title="Async move failed" cascading="False"
+        description="Notify the person who requested to move folder that move failed."
+        enabled="True" event="eea.asyncmove.events.interfaces.IAsyncMoveFail"
+        stop-after="False">
+        <conditions/>
+        <actions>
+            <action type="plone.actions.Mail">
+                <property name="source"/>
+                <property
+                    name="message">Our apologies, your request to move ${folder_move_objects} from ${folder_move_from} to ${folder_move_to} failed.
 
-Please try again later at ${folder_move_from}
+                    Please try again later at ${folder_move_from}
 
-----------
-This email is auto-generated and delivered to you because a move operation was requested for ${folder_move_from}. If you did not request this then just ignore this email.
-----------</property>
-    <property name="subject">Your move request has FAILED</property>
-    <property name="recipients">${asyncmove_email}</property>
-    <property name="exclude_actor">False</property>
-   </action>
-  </actions>
- </rule>
- <rule name="eea-asyncmove-rule-success" title="Async move succeeded" cascading="False"
-    description="Notify the person who requested to move a folder that move is successfull."
-    enabled="True" event="eea.asyncmove.events.interfaces.IAsyncMoveSuccess"
-    stop-after="False">
-  <conditions/>
-  <actions>
-   <action type="plone.actions.Mail">
-    <property name="source"/>
-    <property
-       name="message">Your request to move ${folder_move_objects} from ${folder_move_from} to ${folder_move_to} is ready.
+                    ----------
+                    This email is auto-generated and delivered to you because a move operation was requested for ${folder_move_from}. If you did not request this then just ignore this email.
+                    ----------</property>
+                <property name="subject">Your move request has FAILED</property>
+                <property name="recipients">${asyncmove_email}</property>
+                <property name="exclude_actor">False</property>
+            </action>
+        </actions>
+    </rule>
+    <rule name="eea-asyncmove-rule-success" title="Async move succeeded" cascading="False"
+        description="Notify the person who requested to move a folder that move is successfull."
+        enabled="True" event="eea.asyncmove.events.interfaces.IAsyncMoveSuccess"
+        stop-after="False">
+        <conditions/>
+        <actions>
+            <action type="plone.actions.Mail">
+                <property name="source"/>
+                <property
+                    name="message">Your request to move ${folder_move_objects} from ${folder_move_from} to ${folder_move_to} is ready.
 
-----------
-This email is auto-generated and delivered to you because a move operation was requested for ${folder_move_from}. If you did not request this then just ignore this email.
-----------</property>
-    <property name="subject">Your content has been moved successfully</property>
-    <property name="recipients">${asyncmove_email}</property>
-    <property name="exclude_actor">False</property>
-   </action>
-  </actions>
- </rule>
- <assignment name="eea-asyncmove-rule-fail" bubbles="True" enabled="True" location=""/>
- <assignment name="eea-asyncmove-rule-success" bubbles="True" enabled="True" location=""/>
+                    ----------
+                    This email is auto-generated and delivered to you because a move operation was requested for ${folder_move_from}. If you did not request this then just ignore this email.
+                    ----------</property>
+                <property name="subject">Your content has been moved successfully</property>
+                <property name="recipients">${asyncmove_email}</property>
+                <property name="exclude_actor">False</property>
+            </action>
+        </actions>
+    </rule>
+
+    <rule name="eea-asyncmove-rename-rule-fail" title="Async rename failed" cascading="False"
+        description="Notify the person who requested to rename object that action failed."
+        enabled="True" event="eea.asyncmove.events.interfaces.IAsyncRenameFail"
+        stop-after="False">
+        <conditions/>
+        <actions>
+            <action type="plone.actions.Mail">
+                <property name="source"/>
+                <property
+                    name="message">Our apologies, your request to rename ${folder_move_objects}  failed.
+
+                    Please try again later at ${folder_move_from}
+
+                    ----------
+                    This email is auto-generated and delivered to you because a rename operation was requested for ${folder_move_from}. If you did not request this then just ignore this email.
+                    ----------</property>
+                <property name="subject">Your rename request has FAILED</property>
+                <property name="recipients">${asyncmove_email}</property>
+                <property name="exclude_actor">False</property>
+            </action>
+        </actions>
+    </rule>
+
+    <rule name="eea-asyncmove-rename-rule-success" title="Async rename succeeded" cascading="False"
+        description="Notify the person who requested to rename an object that action is successfull."
+        enabled="True" event="eea.asyncmove.events.interfaces.IAsyncRenameSuccess"
+        stop-after="False">
+        <conditions/>
+        <actions>
+            <action type="plone.actions.Mail">
+                <property name="source"/>
+                <property
+                    name="message">Your request to rename ${folder_move_objects} is ready.
+
+                    ----------
+                    This email is auto-generated and delivered to you because a rename operation was requested for ${folder_move_from}. If you did not request this then just ignore this email.
+                    ----------</property>
+                <property name="subject">Your content has been renamed successfully</property>
+                <property name="recipients">${asyncmove_email}</property>
+                <property name="exclude_actor">False</property>
+            </action>
+        </actions>
+    </rule>
+    <assignment name="eea-asyncmove-rule-fail" bubbles="True" enabled="True" location=""/>
+    <assignment name="eea-asyncmove-rule-success" bubbles="True" enabled="True" location=""/>
+    <assignment name="eea-asyncmove-rename-rule-fail" bubbles="True" enabled="True" location=""/>
+    <assignment name="eea-asyncmove-rename-rule-success" bubbles="True" enabled="True" location=""/>
 </contentrules>

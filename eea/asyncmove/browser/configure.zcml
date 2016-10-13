@@ -12,6 +12,23 @@
         template="templates/async_move.pt"
     />
 
+    <browser:page
+        for="*"
+        layer=".interfaces.ILayer"
+        name="async_rename"
+        class=".async.RenameAsync"
+        permission="cmf.ModifyPortalContent"
+        template="templates/async_rename.pt"
+    />
+
+    <browser:page
+        for="*"
+        layer=".interfaces.ILayer"
+        name="async_rename_redirect"
+        class=".async.RenameAsyncRedirect"
+        permission="cmf.ModifyPortalContent"
+    />
+
      <browser:page
         for="*"
         layer=".interfaces.ILayer"
@@ -42,6 +59,14 @@
         class=".async.MoveAsyncStatus"
         permission="cmf.ModifyPortalContent"
         template="templates/queue.pt"
+    />
+    
+    <browser:page
+        for="*"
+        layer=".interfaces.ILayer"
+        name="cleanup_request_from_content_rules"
+        class=".async.ContentRuleCleanup"
+        permission="cmf.ManagePortal"
     />
 
 </configure>

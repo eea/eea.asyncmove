@@ -16,6 +16,18 @@
     name="Async Move (success)"
     />
 
+    <interface
+        interface="eea.asyncmove.events.interfaces.IAsyncRenameFail"
+        type="plone.contentrules.rule.interfaces.IRuleEventType"
+        name="Async Rename (fail)"
+    />
+
+    <interface
+        interface="eea.asyncmove.events.interfaces.IAsyncRenameSuccess"
+        type="plone.contentrules.rule.interfaces.IRuleEventType"
+        name="Async Rename (success)"
+    />
+
   <!-- Content rules subscribers -->
   <subscriber
     for="eea.asyncmove.events.interfaces.IAsyncMoveFail"
@@ -25,6 +37,16 @@
   <subscriber
     for="eea.asyncmove.events.interfaces.IAsyncMoveSuccess"
     handler=".handlers.execute_event"
+    />
+
+    <subscriber
+        for="eea.asyncmove.events.interfaces.IAsyncRenameFail"
+        handler=".handlers.execute_event"
+    />
+
+    <subscriber
+        for="eea.asyncmove.events.interfaces.IAsyncRenameSuccess"
+        handler=".handlers.execute_event"
     />
 
   <!-- Content rules substitutions -->

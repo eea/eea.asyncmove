@@ -1,5 +1,7 @@
-from setuptools import setup, find_packages
+""" Setup
+"""
 import os
+from setuptools import setup, find_packages
 
 NAME = 'eea.asyncmove'
 PATH = NAME.split('.') + ['version.txt']
