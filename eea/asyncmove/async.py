@@ -135,7 +135,6 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
     Also sends IObjectCopiedEvent and IObjectClonedEvent
     or IObjectWillBeMovedEvent and IObjectMovedEvent.
     """
-
     anno = IAnnotations(self)
     job_id = anno.get('async_move_job')
 
@@ -464,5 +463,21 @@ def async_rename(context, success_event, fail_event, **kwargs):
             message=err.message,
             action='manage_main',
         ))
+    del anno['async_move_job']
 
+    notify(AsyncMoveSaveProgress(
+        context,
+        operation='sub_progress',
+        job_id=job_id,
+        obj_id=context.getId(),
+        progress=1
+    ))
+
+    notify(AsyncMoveSaveProgress(
+        context,
+        operation='progress',
+        job_id=job_id,
+        obj_id=context.getId(),
+        progress=1
+    ))
     notify(success_event(wrapper))

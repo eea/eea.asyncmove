@@ -135,9 +135,6 @@ class MoveAsync(BrowserView):
             if not portal_anno.get('async_move_jobs'):
                 portal_anno['async_move_jobs'] = OOBTree()
 
-            annotation_job = {}
-            portal_anno['async_move_jobs'][job_id] = annotation_job
-
             message_type = 'info'
             message = _(u"Item added to the queue. "
                         u"We will notify you when the job is completed")
@@ -191,9 +188,6 @@ class RenameAsync(MoveAsync):
             portal_anno = IAnnotations(portal)
             if not portal_anno.get('async_move_jobs'):
                 portal_anno['async_move_jobs'] = OOBTree()
-
-            annotation_job = {}
-            portal_anno['async_move_jobs'][job_id] = annotation_job
 
             message_type = 'info'
             message = _(u"Item added to the queue. "
