@@ -13,5 +13,8 @@
   <object name="paste">
    <property name="visible">True</property>
   </object>
+     <object name="rename">
+         <property name="visible">True</property>
+     </object>
  </object>
 </object>
