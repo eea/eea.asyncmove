@@ -319,7 +319,7 @@ class MoveAsyncQueueJSON(JobsJSON):
             return ''
 
         for key, progress in progresses.items():
-            title = progress['title']
+            title = progress.get('title', 'MISSING')
             value = progress['progress'] * 100
             detail = JOB_PROGRESS_DETAILS.get(value, '')
             sub_progresses.append(

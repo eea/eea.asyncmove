@@ -443,9 +443,9 @@ def async_rename(context, success_event, fail_event, **kwargs):
         _success, failure = renameObjectsByPaths(context, paths,
                                                  newids, newtitles)
         if failure:
-            message = _(u'The following item(s) could not be renamed:'
-                        u' ${items}.',
-                        mapping={u'items': ', '.join(failure.keys())})
+            msg = u"The following item(s) from {0} couldn't be renamed: \n" \
+                  u" {1}.".format(', '.join(newids), ', '.join(paths))
+            message = _(msg)
             notify(fail_event(wrapper))
             raise ValueError(MessageDialog(
                 title='Error',
