@@ -32,15 +32,15 @@ logger = logging.getLogger('eea.asyncmove')
 ASYNCMOVE_QUEUE = 'asyncmove'
 
 
-class MoveAsyncConfirmation(BrowserView):
+class AsyncConfirmation(BrowserView):
     """ action confirmation
     """
 
-    def cp_info(self):
-        """ get info of files to paste
+    def objects_to_async(self, request_key='__cp'):
+        """ get info of files to perform async operation
         """
 
-        newid = self.request.get('__cp')
+        newid = self.request.get(request_key)
 
         if not newid:
             raise CopyError(eNoItemsSpecified)
@@ -70,11 +70,11 @@ class MoveAsyncConfirmation(BrowserView):
 class MoveAsync(BrowserView):
     """ Ping action executor
     """
-    def _redirect(self, msg, msg_type='info'):
+    def _redirect(self, msg, to='/async_move', msg_type='info'):
         """ Set status message to msg and redirect to context absolute_url
         """
         if self.request:
-            url = self.context.absolute_url() + '/async_move'
+            url = self.context.absolute_url() + to
             IStatusMessage(self.request).addStatusMessage(msg, type=msg_type)
             self.request.response.redirect(url)
         return msg
@@ -89,20 +89,22 @@ class MoveAsync(BrowserView):
             )
             self.request['__cp'] = None
 
-    def paste(self, **kwargs):
-        """ Paste synchronously
+    def original_action(self, action='paste'):
+        """ Plone synchronous action
         """
         try:
-            object_paste = self.context.restrictedTraverse('object_paste')
-            object_paste()
+            obj_action = 'object_' + action
+            object_action = self.context.restrictedTraverse(obj_action)
+            object_action()
         except Exception, err:
             logger.exception(err)
-            msg = _(u"Can't paste item(s) here: %s", err)
+            msg = _(u"Can't %s item(s) here: %s", action, err)
         else:
-            msg = _(u"Item(s) pasted.")
+            msg = _(u"Item(s) %s.", action)
 
         self._cleanup()
-        return self._redirect(msg)
+        redirect_to = 'async_move' if action == 'paste' else ''
+        return self._redirect(msg, to=redirect_to)
 
     def post(self, **kwargs):
         """ POST
@@ -111,7 +113,7 @@ class MoveAsync(BrowserView):
         if 'form.button.Cancel' in kwargs:
             return self._redirect(_(u"Paste cancelled"))
         elif 'form.button.paste' in kwargs:
-            return self.paste()
+            return self.original_action()
         elif 'form.button.async' not in kwargs:
             return self.index()
 
@@ -165,6 +167,10 @@ class RenameAsync(MoveAsync):
         paths = self.request.get('paths', '')
         if 'form.button.Cancel' in kwargs:
             return self._redirect(_(u"Rename cancelled"))
+        elif 'form.button.rename' in kwargs:
+            return self.original_action(action='rename')
+        elif 'form.button.async_rename' not in kwargs:
+            return self.index()
 
         worker = getUtility(IAsyncService)
         queue = worker.getQueues()['']

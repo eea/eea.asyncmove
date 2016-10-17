@@ -1,8 +1,7 @@
 /* global jQuery */
 
 jQuery(document).ready(function($) {
-  var links = jQuery('#edit-bar').find('a');
-  var async_paste = links.filter('[href$="async_move_confirmation"]');
+  var async_paste = $("#plone-contentmenu-actions-paste_async");
   async_paste.prepOverlay({
     subtype: 'ajax',
     formselector: 'form',

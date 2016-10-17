@@ -16,7 +16,7 @@
     <object name="rename_async" meta_type="CMF Action" i18n:domain="eea" insert-after="rename">
       <property name="title" i18n:translate="">Rename (async)</property>
       <property name="description" i18n:translate=""></property>
-      <property name="url_expr">string:async_rename_redirect:method</property>
+      <property name="url_expr">string:rename_confirmation:method</property>
       <property name="available_expr">python:checkPermission("Delete objects", globals_view.getParentObject()) and checkPermission("Copy or Move", object) and checkPermission("Delete portal content", object) and checkPermission("Add portal content", object) and not globals_view.isPortalOrPortalDefaultPage()</property>
       <property name="permissions">
         <element value="View"/>

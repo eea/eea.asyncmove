@@ -33,9 +33,18 @@
         for="*"
         layer=".interfaces.ILayer"
         name="paste_confirmation"
-        class=".async.MoveAsyncConfirmation"
+        class=".async.AsyncConfirmation"
         permission="cmf.ModifyPortalContent"
         template="templates/paste_confirmation.pt"
+    />
+
+    <browser:page
+      for="*"
+      layer=".interfaces.ILayer"
+      name="rename_confirmation"
+      class=".async.AsyncConfirmation"
+      permission="cmf.ModifyPortalContent"
+      template="templates/rename_confirmation.pt"
     />
 
     <browser:resource

@@ -1,20 +1,23 @@
 <?xml version="1.0"?>
 <object name="portal_actions">
- <object name="folder_buttons">
-  <object name="paste_async" remove="True" />
-  <object name="rename_async" remove="True" />
-  <object name="paste">
-   <property name="visible">True</property>
+  <object name="folder_buttons">
+    <object name="paste_async" remove="True" />
+    <object name="rename_async" remove="True" />
+    <object name="paste">
+      <property name="visible">True</property>
+    </object>
+    <object name="rename">
+      <property name="visible">True</property>
+    </object>
   </object>
- </object>
- <object name="object_buttons">
-  <object name="paste_async" remove="True" />
-  <object name="rename_async" remove="True" />
-  <object name="paste">
-   <property name="visible">True</property>
+  <object name="object_buttons">
+    <object name="paste_async" remove="True" />
+    <object name="rename_async" remove="True" />
+    <object name="paste">
+      <property name="visible">True</property>
+    </object>
+    <object name="rename">
+      <property name="visible">True</property>
+    </object>
   </object>
-     <object name="rename">
-         <property name="visible">True</property>
-     </object>
- </object>
 </object>
