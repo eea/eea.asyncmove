@@ -38,7 +38,7 @@
 
       <div id="content-core">
           <ul>
-            <li tal:repeat="item view/cp_info">
+            <li tal:repeat="item view/objects_to_async">
                 <span tal:content="item/Title">The item title (ID)</span>
             </li>
           </ul>
