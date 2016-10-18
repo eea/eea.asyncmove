@@ -70,11 +70,11 @@ class AsyncConfirmation(BrowserView):
 class MoveAsync(BrowserView):
     """ Ping action executor
     """
-    def _redirect(self, msg, to='/async_move', msg_type='info'):
+    def _redirect(self, msg,  msg_type='info', redirect_to='/async_move'):
         """ Set status message to msg and redirect to context absolute_url
         """
         if self.request:
-            url = self.context.absolute_url() + to
+            url = self.context.absolute_url() + redirect_to
             IStatusMessage(self.request).addStatusMessage(msg, type=msg_type)
             self.request.response.redirect(url)
         return msg
@@ -104,7 +104,7 @@ class MoveAsync(BrowserView):
 
         self._cleanup()
         redirect_to = 'async_move' if action == 'paste' else ''
-        return self._redirect(msg, to=redirect_to)
+        return self._redirect(msg, redirect_to=redirect_to)
 
     def post(self, **kwargs):
         """ POST
