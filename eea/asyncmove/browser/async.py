@@ -166,11 +166,12 @@ class RenameAsync(MoveAsync):
         newtitles = self.request.get('new_titles', '')
         paths = self.request.get('paths', '')
         if 'form.button.Cancel' in kwargs:
-            return self._redirect(_(u"Rename cancelled"))
+            return self._redirect(_(u"Rename cancelled"), redirect_to='')
         elif 'form.button.rename' in kwargs:
             return self.original_action(action='rename')
-        elif 'form.button.async_rename' not in kwargs:
-            return self.index()
+        elif 'form.button.async_rename' in kwargs:
+            return self.context.restrictedTraverse(
+                '@@async_rename_redirect')(kwargs=kwargs)
 
         worker = getUtility(IAsyncService)
         queue = worker.getQueues()['']

@@ -66,9 +66,17 @@
                          tal:condition="request/orig_template|nothing"
                          tal:attributes="value request/orig_template"/>
 
-                <input type="hidden"
-                       name="paths:list"
-                         tal:attributes="value paths" />
+                <tal:items tal:repeat="obj items">
+                    <tal:block define="item obj/getId;
+                                     item_path python:'/'.join(obj.getPhysicalPath());">
+                        
+                                <input type="hidden"
+                                       name="paths:list"
+                                       value="fav_999816073"
+                                         tal:attributes="value item_path" />
+                    </tal:block>
+                </tal:items>
+
 
                 <input class="destructive"
                        type="submit"

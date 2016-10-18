@@ -440,6 +440,12 @@ def async_rename(context, success_event, fail_event, **kwargs):
     )
 
     try:
+        obdict = {}
+        for i, v in enumerate(newids):
+            obdict[v] = newtitles[i]  
+        notify(AsyncMoveSaveProgress(
+            context, operation='initialize', job_id=job_id, oblist_id=[
+                (oid, obdict[oid])  for oid in obdict]))
         _success, failure = renameObjectsByPaths(context, paths,
                                                  newids, newtitles)
         if failure:
@@ -464,7 +470,6 @@ def async_rename(context, success_event, fail_event, **kwargs):
             action='manage_main',
         ))
     del anno['async_move_job']
-
     notify(AsyncMoveSaveProgress(
         context,
         operation='sub_progress',

@@ -12,8 +12,8 @@
 
 <metal:main fill-slot="main">
 
-    <tal:block tal:condition="not: request/paths | nothing"
-             tal:replace="python:context.redirectToReferrer('Please select one or more items to rename.')"/>
+    <!--?<tal:block tal:condition="not: request/paths | nothing"-->
+             <!--?tal:replace="python:context.redirectToReferrer('Please select one or more items to rename.')"/>-->
 
     <h1 class="documentFirstHeading"
              i18n:translate="heading_rename_item">Rename item</h1>
@@ -28,8 +28,8 @@
                 errors options/state/getErrors|nothing;
                 checkPermission nocall: context/portal_membership/checkPermission;">
 
-            <tal:block tal:condition="python:paths and not items"
-                     tal:replace="python:context.redirectToReferrer('The item(s) you selected are no longer available.')"/>
+            <!--?<tal:block tal:condition="python:paths and not items"-->
+                     <!--?tal:replace="python:context.redirectToReferrer('The item(s) you selected are no longer available.')"/>-->
 
             <form name="folder_rename"
                   class="enableAutoFocus"
