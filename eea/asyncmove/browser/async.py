@@ -103,7 +103,7 @@ class MoveAsync(BrowserView):
             msg = _(u"Item(s) %s.", action)
 
         self._cleanup()
-        redirect_to = 'async_move' if action == 'paste' else ''
+        redirect_to = '/async_move' if action == 'paste' else ''
         return self._redirect(msg, redirect_to=redirect_to)
 
     def post(self, **kwargs):
