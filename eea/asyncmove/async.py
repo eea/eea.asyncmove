@@ -462,6 +462,22 @@ def async_rename(context, success_event, fail_event, **kwargs):
         logger.exception(err)
         wrapper.error = err.message
         wrapper.job_id = job_id
+        
+        for oid in obdict: 
+            notify(AsyncMoveSaveProgress(
+                context,
+                operation='sub_progress',
+                job_id=job_id,
+                obj_id=oid,
+                progress=.75
+            ))
+        
+        notify(AsyncMoveSaveProgress(
+            context,
+            operation='progress',
+            job_id=job_id,
+            progress=.75
+        ))
 
         notify(fail_event(wrapper))
         raise ValueError(MessageDialog(
@@ -470,19 +486,20 @@ def async_rename(context, success_event, fail_event, **kwargs):
             action='manage_main',
         ))
     del anno['async_move_job']
-    notify(AsyncMoveSaveProgress(
-        context,
-        operation='sub_progress',
-        job_id=job_id,
-        obj_id=context.getId(),
-        progress=1
-    ))
-
+    
+    for oid in obdict: 
+        notify(AsyncMoveSaveProgress(
+            context,
+            operation='sub_progress',
+            job_id=job_id,
+            obj_id=oid,
+            progress=1
+        ))
+    
     notify(AsyncMoveSaveProgress(
         context,
         operation='progress',
         job_id=job_id,
-        obj_id=context.getId(),
         progress=1
     ))
     notify(success_event(wrapper))
