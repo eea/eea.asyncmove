@@ -442,7 +442,7 @@ def async_rename(context, success_event, fail_event, **kwargs):
     try:
         obdict = {}
         for i, v in enumerate(newids):
-            obdict[v] = newtitles[i]  
+            obdict[v] = newtitles[i]
         notify(AsyncMoveSaveProgress(
             context, operation='initialize', job_id=job_id, oblist_id=[
                 (oid, obdict[oid])  for oid in obdict]))
@@ -462,8 +462,7 @@ def async_rename(context, success_event, fail_event, **kwargs):
         logger.exception(err)
         wrapper.error = err.message
         wrapper.job_id = job_id
-        
-        for oid in obdict: 
+        for oid in obdict:
             notify(AsyncMoveSaveProgress(
                 context,
                 operation='sub_progress',
@@ -471,7 +470,7 @@ def async_rename(context, success_event, fail_event, **kwargs):
                 obj_id=oid,
                 progress=.75
             ))
-        
+
         notify(AsyncMoveSaveProgress(
             context,
             operation='progress',
@@ -486,8 +485,8 @@ def async_rename(context, success_event, fail_event, **kwargs):
             action='manage_main',
         ))
     del anno['async_move_job']
-    
-    for oid in obdict: 
+
+    for oid in obdict:
         notify(AsyncMoveSaveProgress(
             context,
             operation='sub_progress',
@@ -495,7 +494,7 @@ def async_rename(context, success_event, fail_event, **kwargs):
             obj_id=oid,
             progress=1
         ))
-    
+
     notify(AsyncMoveSaveProgress(
         context,
         operation='progress',

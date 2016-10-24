@@ -21,14 +21,6 @@
         template="templates/async_rename.pt"
     />
 
-    <browser:page
-        for="*"
-        layer=".interfaces.ILayer"
-        name="async_rename_redirect"
-        class=".async.RenameAsyncRedirect"
-        permission="cmf.ModifyPortalContent"
-    />
-
      <browser:page
         for="*"
         layer=".interfaces.ILayer"

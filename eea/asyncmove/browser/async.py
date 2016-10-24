@@ -5,7 +5,6 @@ import logging
 from BTrees.OOBTree import OOBTree
 from OFS.Moniker import loadMoniker
 from Products.Five import BrowserView
-from Products.PythonScripts.standard import url_quote_plus
 from Products.statusmessages.interfaces import IStatusMessage
 from plone.app.async.interfaces import IAsyncService
 from plone.app.async.browser.queue import JobsJSON
@@ -70,7 +69,7 @@ class AsyncConfirmation(BrowserView):
 class MoveAsync(BrowserView):
     """ Ping action executor
     """
-    def _redirect(self, msg,  msg_type='info', redirect_to='/async_move'):
+    def _redirect(self, msg, msg_type='info', redirect_to='/async_move'):
         """ Set status message to msg and redirect to context absolute_url
         """
         if self.request:
@@ -170,8 +169,7 @@ class RenameAsync(MoveAsync):
         elif 'form.button.rename' in kwargs:
             return self.original_action(action='rename')
         elif 'form.button.async_rename' in kwargs:
-            return self.context.restrictedTraverse(
-                '@@async_rename_redirect')(kwargs=kwargs)
+            return self.index()
 
         worker = getUtility(IAsyncService)
         queue = worker.getQueues()['']
@@ -205,34 +203,6 @@ class RenameAsync(MoveAsync):
             message = u"Failed to add items to the sync queue"
 
         return self._redirect(message, message_type)
-
-
-class RenameAsyncRedirect(BrowserView):
-    """ RenameAsyncRedirect
-    """
-    def __init__(self, context, request):
-        """ init
-        """
-        self.context = context
-        self.request = request
-
-    def __call__(self, *args, **kwargs):
-        """ call
-        """
-        pathName = url_quote_plus('paths:list')
-        safePath = self.request.get('paths') or ['/'.join(
-            self.context.getPhysicalPath())]
-        initial = "&" + pathName + "="
-        res = []
-        for value in safePath:
-            res.append(initial + value)
-        output = "".join(res)
-        orig_template = self.request['HTTP_REFERER'].split('?')[0]
-        url = '%s/@@async_rename?orig_template=%s%s' % (
-            self.context.absolute_url(),
-            orig_template,
-            output)
-        return self.request.RESPONSE.redirect(url)
 
 
 class MoveAsyncQueueJSON(JobsJSON):

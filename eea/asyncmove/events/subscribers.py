@@ -45,7 +45,6 @@ def saveJobProgress(event):
     portal_anno = IAnnotations(portal)
     annotation = portal_anno.get('async_move_jobs')
     annotation_job = annotation.setdefault(event.job_id, {})
-    
 
     if event.operation == 'initialize':
         annotation_job['sub_progress'] = {}
