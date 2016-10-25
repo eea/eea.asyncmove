@@ -173,6 +173,7 @@ class RenameAsync(MoveAsync):
 
         worker = getUtility(IAsyncService)
         queue = worker.getQueues()['']
+        email = api.user.get_current().getProperty('email')
 
         try:
             job = worker.queueJobInQueue(
@@ -184,7 +185,7 @@ class RenameAsync(MoveAsync):
                 paths=paths,
                 success_event=AsyncRenameSuccess,
                 fail_event=AsyncRenameFail,
-                email=api.user.get_current().getProperty('email')
+                email=email
             )
             job_id = u64(job._p_oid)
             anno = IAnnotations(self.context)
@@ -196,7 +197,8 @@ class RenameAsync(MoveAsync):
 
             message_type = 'info'
             message = _(u"Item added to the queue. "
-                        u"We will notify you when the job is completed")
+                        u"We will notify you by email at '%s' when the job is "
+                        u"completed" % email)
         except Exception, err:
             logger.exception(err)
             message_type = 'error'

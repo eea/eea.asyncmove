@@ -2,7 +2,7 @@
 <object name="portal_controlpanel">
 
  <configlet
-  title="Async Move Queue"
+  title="Async bulk operations queue"
   action_id="eea.asyncmove"
   appId="eea.asyncmove"
   category="Products"
