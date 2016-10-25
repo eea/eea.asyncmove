@@ -7,6 +7,9 @@ class IAsyncMoveEvent(IObjectEvent):
     """ Base Event Interface for all Async events
     """
 
+class IAsyncOperationAdded(IAsyncMoveEvent):
+    """ Async job added
+    """
 
 class IAsyncMoveSuccess(IAsyncMoveEvent):
     """ Async job for move succeeded

@@ -4,6 +4,11 @@
   <include package="plone.app.contentrules" />
 
   <!-- Custom content-rules events -->
+    <interface
+        interface="eea.asyncmove.events.interfaces.IAsyncOperationAdded"
+        type="plone.contentrules.rule.interfaces.IRuleEventType"
+        name="Async operation (added)"
+    />
   <interface
     interface="eea.asyncmove.events.interfaces.IAsyncMoveFail"
     type="plone.contentrules.rule.interfaces.IRuleEventType"
