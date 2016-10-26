@@ -49,6 +49,14 @@
                 <span tal:content="item/Title">The item title (ID)</span>
             </li>
         </ul>
+        
+        <tal:queue_length tal:condition="context/@@async_queue_length">
+            <p i18n:translate="async_operation_queue_length" 
+                >There are already 
+                <span i18n:name="async_queue_length" tal:content="context/@@async_queue_length"></span>jobs in the queue</p>
+            <p i18n:translate="async_operation_many_jobs">If this number is too big you should consider using the non async operation</p>
+        </tal:queue_length>
+            
 
         <form method="POST"
               action="#"

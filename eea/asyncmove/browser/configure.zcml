@@ -11,6 +11,14 @@
         permission="cmf.ModifyPortalContent"
         template="templates/async_move.pt"
     />
+    
+    <browser:page
+        for="*"
+        layer=".interfaces.ILayer"
+        name="async_queue_length"
+        class=".async.AsyncQueueLength"
+        permission="cmf.ModifyPortalContent"
+    />
 
     <browser:page
         for="*"

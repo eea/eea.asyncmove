@@ -421,3 +421,14 @@ class ContentRuleCleanup(BrowserView):
                         log.warn(wmsg)
                         result.append(wmsg)
         return "\n".join(result)
+
+
+class AsyncQueueLength(BrowserView):
+    """ Current length of queued async operations 
+    """
+    
+    def __call__(self):
+        """ call
+        """
+        service = getUtility(IAsyncService)
+        return len(service.getQueues()[''])
