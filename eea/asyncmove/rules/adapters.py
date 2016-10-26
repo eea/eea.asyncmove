@@ -16,6 +16,7 @@ class FolderMoveFrom(BaseSubstitution):
         """
         return getattr(self.wrapper, 'folder_move_from', '')
 
+
 class FolderMoveTo(BaseSubstitution):
     """ Move folder to substitution
     """
@@ -27,6 +28,7 @@ class FolderMoveTo(BaseSubstitution):
         """
         return getattr(self.wrapper, 'folder_move_to', '')
 
+
 class FolderMoveObjects(BaseSubstitution):
     """ Move folder objects substitution
     """
@@ -37,6 +39,7 @@ class FolderMoveObjects(BaseSubstitution):
         """ Safe call
         """
         return getattr(self.wrapper, 'folder_move_objects', '')
+
 
 class FolderMoveEmail(BaseSubstitution):
     """ Move folder email substitution
@@ -78,10 +81,23 @@ class AsyncMoveQueueLength(BaseSubstitution):
     """ Async queue length
     """
     category = u'AsyncMove'
-    description = u'Queue length'
+    description = u'Queue length for async operations'
 
     def safe_call(self):
         """ Safe call
         """
         service = getUtility(IAsyncService)
-        return len(service.getQueues()[''])
+        return len(service.getQueues()['']) - 1
+
+
+
+class AsyncMoveOperationType(BaseSubstitution):
+    """ job id substitution
+    """
+    category = u'AsyncMove'
+    description = u'Async operation type'
+
+    def safe_call(self):
+        """ Safe call
+        """
+        return getattr(self.wrapper, 'async_operation_type', 'move')

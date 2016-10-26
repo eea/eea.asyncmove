@@ -52,11 +52,11 @@
             <action type="plone.actions.Mail">
                 <property name="source"/>
                 <property
-                    name="message">Dear user, you have requested to do a ${asyncmove_operation} for ${asyncmove_objects}.
-                        We have added your request to the async queue, there are ${asyncmove_queue_length} jobs in the queue before your job is executed. You will receive an email when the job is done.
+                    name="message">Dear user, you have requested to do a ${asynoperation_type} for ${folder_move_objects}.
+                        We have added your request to the async queue, there are ${asyncoperation_queue_length} jobs in the queue to run before your job is executed. You will receive an email when the job is done.
 
                     ----------
-                    This email is auto-generated and delivered to you because a ${asyncmove_operation} operation was requested for ${folder_move_from}. If you did not request this then just ignore this email.
+                    This email is auto-generated and delivered to you because a ${asyncoperation_type} operation was requested from ${folder_move_from}. If you did not request this then just ignore this email.
                     ----------</property>
                 <property name="subject">Your operation has been added to the queue successfully</property>
                 <property name="recipients">${asyncmove_email}</property>

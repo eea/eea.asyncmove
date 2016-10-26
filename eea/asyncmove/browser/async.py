@@ -27,7 +27,8 @@ from plone import api
 from eea.asyncmove.config import EEAMessageFactory as _
 from eea.asyncmove.async import async_move, JOB_PROGRESS_DETAILS
 from eea.asyncmove.async import async_rename
-from eea.asyncmove.events.async import AsyncMoveSuccess, AsyncMoveFail, AsyncOperationAdded
+from eea.asyncmove.events.async import AsyncOperationAdded
+from eea.asyncmove.events.async import AsyncMoveSuccess, AsyncMoveFail
 from eea.asyncmove.events.async import AsyncRenameSuccess, AsyncRenameFail
 
 logger = logging.getLogger('eea.asyncmove')
@@ -199,6 +200,7 @@ class RenameAsync(MoveAsync):
                 folder_move_to=', '.join(newids),
                 folder_move_objects=', '.join(paths),
                 asyncmove_email=email,
+                async_operation_type='rename',
                 email=email
             )
             notify(AsyncOperationAdded(wrapper))

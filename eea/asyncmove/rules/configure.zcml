@@ -35,6 +35,11 @@
 
   <!-- Content rules subscribers -->
   <subscriber
+    for="eea.asyncmove.events.interfaces.IAsyncOperationAdded"
+    handler=".handlers.execute_event"
+    />
+    
+  <subscriber
     for="eea.asyncmove.events.interfaces.IAsyncMoveFail"
     handler=".handlers.execute_event"
     />
@@ -101,7 +106,13 @@
         for="eea.asyncmove.interfaces.IContextWrapper"
         provides="plone.stringinterp.interfaces.IStringSubstitution"
         factory=".adapters.AsyncMoveQueueLength"
-        name="asyncmove_queue_length"
+        name="async_operation_queue_length"
     />
 
+    <adapter
+        for="eea.asyncmove.interfaces.IContextWrapper"
+        provides="plone.stringinterp.interfaces.IStringSubstitution"
+        factory=".adapters.AsyncMoveOperationType"
+        name="async_operation_type"
+    />
 </configure>
