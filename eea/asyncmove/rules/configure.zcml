@@ -97,4 +97,11 @@
     name="asyncmove_jobid"
     />
 
+    <adapter
+        for="eea.asyncmove.interfaces.IContextWrapper"
+        provides="plone.stringinterp.interfaces.IStringSubstitution"
+        factory=".adapters.AsyncMoveQueueLength"
+        name="asyncmove_queue_length"
+    />
+
 </configure>

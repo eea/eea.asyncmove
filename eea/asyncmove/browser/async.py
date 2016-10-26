@@ -9,6 +9,7 @@ from Products.statusmessages.interfaces import IStatusMessage
 from plone.app.async.interfaces import IAsyncService
 from plone.app.async.browser.queue import JobsJSON
 from plone.contentrules.engine.interfaces import IRuleStorage
+from plone.stringinterp.interfaces import IContextWrapper
 from zope.annotation import IAnnotations
 from zope.component import getUtility
 from zope.component import queryUtility
@@ -19,12 +20,14 @@ from ZODB.POSException import ConflictError
 from OFS.CopySupport import cookie_path, _cb_decode, CopyError
 from OFS.CopySupport import eInvalid, eNotFound, eNoItemsSpecified
 from Products.CMFCore.utils import getToolByName
+from zope.event import notify
+
 from plone import api
 
 from eea.asyncmove.config import EEAMessageFactory as _
 from eea.asyncmove.async import async_move, JOB_PROGRESS_DETAILS
 from eea.asyncmove.async import async_rename
-from eea.asyncmove.events.async import AsyncMoveSuccess, AsyncMoveFail
+from eea.asyncmove.events.async import AsyncMoveSuccess, AsyncMoveFail, AsyncOperationAdded
 from eea.asyncmove.events.async import AsyncRenameSuccess, AsyncRenameFail
 
 logger = logging.getLogger('eea.asyncmove')
@@ -129,6 +132,7 @@ class MoveAsync(BrowserView):
                 email=api.user.get_current().getProperty('email')
             )
             job_id = u64(job._p_oid)
+
             anno = IAnnotations(self.context)
             anno['async_move_job'] = job_id
             portal = getToolByName(self, 'portal_url').getPortalObject()
@@ -188,6 +192,17 @@ class RenameAsync(MoveAsync):
                 email=email
             )
             job_id = u64(job._p_oid)
+
+            context = self.context
+            wrapper = IContextWrapper(context)(
+                folder_move_from=context.absolute_url(1),
+                folder_move_to=', '.join(newids),
+                folder_move_objects=', '.join(paths),
+                asyncmove_email=email,
+                email=email
+            )
+            notify(AsyncOperationAdded(wrapper))
+
             anno = IAnnotations(self.context)
             anno['async_move_job'] = job_id
             portal = getToolByName(self, 'portal_url').getPortalObject()

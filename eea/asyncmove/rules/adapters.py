@@ -1,6 +1,9 @@
 """ Content-rules string substitution
 """
+from plone.app.async.interfaces import IAsyncService
 from plone.stringinterp.adapters import BaseSubstitution
+from zope.component import getUtility
+
 
 class FolderMoveFrom(BaseSubstitution):
     """ Move folder from substitution
@@ -69,3 +72,16 @@ class AsyncMoveJobID(BaseSubstitution):
         """ Safe call
         """
         return getattr(self.wrapper, 'job_id', '')
+
+
+class AsyncMoveQueueLength(BaseSubstitution):
+    """ Async queue length
+    """
+    category = u'AsyncMove'
+    description = u'Queue length'
+
+    def safe_call(self):
+        """ Safe call
+        """
+        service = getUtility(IAsyncService)
+        return len(service.getQueues()[''])

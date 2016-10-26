@@ -15,6 +15,7 @@ class AsyncOperationAdded(AsyncMoveEvent):
     """ Event triggered when an async job was added
     """
 
+
 @implementer(IAsyncMoveFail)
 class AsyncMoveFail(AsyncMoveEvent):
     """ Event triggered when an async move job failed

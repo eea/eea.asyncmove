@@ -33,16 +33,16 @@ jQuery(document).ready(function($) {
       name: 'orig_template'
     });
     $input.appendTo($el.find(".formControls"));
-  } 
+  };
   // set orig_template for rename_confirmation for to asyn_move in order
   // to enforce consistent behaviour as async or normal paste goes to
   // async_move page 
-  $("#rename_confirmation").find("input[name='orig_template']").attr('value', 'async_move')
+  $("#rename_confirmation").find("input[name='orig_template']").attr('value', 'async_move');
   
   var modify_original_rename = function(el) {
     hide_error(el);
     modify_orig_template(el);
-  }
+  };
   
   var async_rename = $("#plone-contentmenu-actions-rename_async");
   async_rename.prepOverlay({
