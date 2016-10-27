@@ -16,7 +16,7 @@ def test_suite():
     suite.addTests([
         layered(
             doctest.DocFileSuite(
-                '../../README.txt',
+                'README.txt',
                 optionflags=OPTIONFLAGS,
                 package='eea.asyncmove'),
             layer=FUNCTIONAL_TESTING),
