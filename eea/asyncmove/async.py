@@ -272,9 +272,9 @@ def manage_pasteObjects_no_events(self, cb_copy_data=None, REQUEST=None):
                 obj_path = '/'.join(
                     orig_container.getPhysicalPath()) + '/' + orig_id
                 orig_container._delObject(orig_id, suppress_events=True)
+                uncatalog_path = obj_path
                 try:
                     uncatalog_objs = cat(path=obj_path)
-                    uncatalog_path = obj_path
                     for obj_brain in uncatalog_objs:
                         uncatalog_path = obj_brain.getPath()
                         cat.uncatalog_object(uncatalog_path)
@@ -424,40 +424,39 @@ def async_rename(context, success_event, fail_event, **kwargs):
     email = kwargs.get('email', [])
     anno = IAnnotations(context)
     job_id = anno.get('async_move_job')
+    context_rel_path = context.absolute_url(1)
 
     if not newids:
-        wrapper = IContextWrapper(context)(
-            error=u'Invalid newid'
-        )
+        wrapper = IContextWrapper(context)(error=u'Invalid newid')
         notify(fail_event(wrapper))
         raise ValueError(eNoItemsSpecified)
     wrapper = IContextWrapper(context)(
-        folder_move_from=context.absolute_url(1),
+        folder_move_from=context_rel_path,
         folder_move_to=', '.join(newids),
         folder_move_objects=', '.join(paths),
         asyncmove_email=email,
         email=email
     )
-
+    obdict = {}
     try:
-        obdict = {}
         for i, v in enumerate(newids):
             obdict[v] = newtitles[i]
         notify(AsyncMoveSaveProgress(
             context, operation='initialize', job_id=job_id, oblist_id=[
-                (oid, obdict[oid])  for oid in obdict]))
+                (oid, obdict[oid]) for oid in obdict]))
         _success, failure = renameObjectsByPaths(context, paths,
                                                  newids, newtitles)
         if failure:
-            msg = u"The following item(s) from {0} couldn't be renamed: \n" \
-                  u" {1}.".format(', '.join(newids), ', '.join(paths))
-            message = _(msg)
-            notify(fail_event(wrapper))
-            raise ValueError(MessageDialog(
-                title='Error',
-                message=message,
-                action='manage_main',
-            ))
+            for oid in failure:
+                if oid in obdict:
+                    del obdict[oid]
+                notify(AsyncMoveSaveProgress(
+                    context,
+                    operation='sub_progress',
+                    job_id=job_id,
+                    obj_id=oid,
+                    progress=0.5
+                ))
     except Exception, err:
         logger.exception(err)
         wrapper.error = err.message
