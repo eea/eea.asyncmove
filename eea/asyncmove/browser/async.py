@@ -424,7 +424,7 @@ class ContentRuleCleanup(BrowserView):
 
 
 class AsyncQueueLength(BrowserView):
-    """ Current length of queued async operations 
+    """ Current length of queued async operations
     """
     
     def __call__(self):

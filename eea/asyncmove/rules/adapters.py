@@ -86,7 +86,7 @@ class AsyncMoveQueueLength(BaseSubstitution):
         """
         length = self.context.restrictedTraverse('@@async_queue_length')
         if length:
-            return length() - 1    
+            return length() - 1
         return 0
 
 

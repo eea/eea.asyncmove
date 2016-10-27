@@ -17,7 +17,7 @@ from Products.CMFCore.utils import getToolByName
 from ZODB.POSException import ConflictError
 from ZPublisher.HTTPRequest import HTTPRequest
 from ZPublisher.HTTPResponse import HTTPResponse
-from eea.asyncmove.config import EEAMessageFactory as _
+#from eea.asyncmove.config import EEAMessageFactory as _
 from eea.asyncmove.events.async import AsyncMoveSaveProgress
 from eea.asyncmove.interfaces import IContextWrapper
 from eea.asyncmove.utils import renameObjectsByPaths
@@ -383,7 +383,7 @@ def async_move(context, success_event, fail_event, **kwargs):
             aq_inner(oblist[0])).absolute_url(),
         folder_move_to=context.absolute_url(),
         folder_move_objects=', '.join([obj.getId() for obj in oblist]),
-        asyncmove_email=email,
+        asyncmove_email=email
     )
 
     try:
