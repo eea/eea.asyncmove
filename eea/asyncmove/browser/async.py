@@ -8,8 +8,11 @@ from Products.Five import BrowserView
 from Products.statusmessages.interfaces import IStatusMessage
 from plone.app.async.interfaces import IAsyncService
 from plone.app.async.browser.queue import JobsJSON
+from plone.contentrules.engine.interfaces import IRuleStorage
+from plone.stringinterp.interfaces import IContextWrapper
 from zope.annotation import IAnnotations
 from zope.component import getUtility
+from zope.component import queryUtility
 from zc.async.utils import custom_repr
 from ZODB.utils import u64
 from ZODB.POSException import ConflictError
@@ -17,25 +20,30 @@ from ZODB.POSException import ConflictError
 from OFS.CopySupport import cookie_path, _cb_decode, CopyError
 from OFS.CopySupport import eInvalid, eNotFound, eNoItemsSpecified
 from Products.CMFCore.utils import getToolByName
+from zope.event import notify
+
 from plone import api
 
 from eea.asyncmove.config import EEAMessageFactory as _
 from eea.asyncmove.async import async_move, JOB_PROGRESS_DETAILS
+from eea.asyncmove.async import async_rename
+from eea.asyncmove.events.async import AsyncOperationAdded
 from eea.asyncmove.events.async import AsyncMoveSuccess, AsyncMoveFail
+from eea.asyncmove.events.async import AsyncRenameSuccess, AsyncRenameFail
 
 logger = logging.getLogger('eea.asyncmove')
 ASYNCMOVE_QUEUE = 'asyncmove'
 
 
-class MoveAsyncConfirmation(BrowserView):
+class AsyncConfirmation(BrowserView):
     """ action confirmation
     """
 
-    def cp_info(self):
-        """ get info of files to paste
+    def objects_to_async(self, request_key='__cp'):
+        """ get info of files to perform async operation
         """
 
-        newid = self.request.get('__cp')
+        newid = self.request.get(request_key)
 
         if not newid:
             raise CopyError(eNoItemsSpecified)
@@ -65,11 +73,11 @@ class MoveAsyncConfirmation(BrowserView):
 class MoveAsync(BrowserView):
     """ Ping action executor
     """
-    def _redirect(self, msg, msg_type='info'):
+    def _redirect(self, msg, msg_type='info', redirect_to='/async_move'):
         """ Set status message to msg and redirect to context absolute_url
         """
         if self.request:
-            url = self.context.absolute_url() + '/async_move'
+            url = self.context.absolute_url() + redirect_to
             IStatusMessage(self.request).addStatusMessage(msg, type=msg_type)
             self.request.response.redirect(url)
         return msg
@@ -84,20 +92,22 @@ class MoveAsync(BrowserView):
             )
             self.request['__cp'] = None
 
-    def paste(self, **kwargs):
-        """ Paste synchronously
+    def original_action(self, action='paste'):
+        """ Plone synchronous action
         """
         try:
-            object_paste = self.context.restrictedTraverse('object_paste')
-            object_paste()
+            obj_action = 'object_' + action
+            object_action = self.context.restrictedTraverse(obj_action)
+            object_action()
         except Exception, err:
             logger.exception(err)
-            msg = _(u"Can't paste item(s) here: %s", err)
+            msg = _(u"Can't %s item(s) here: %s", action, err)
         else:
-            msg = _(u"Item(s) pasted.")
+            msg = _(u"Item(s) %s.", action)
 
         self._cleanup()
-        return self._redirect(msg)
+        redirect_to = '/async_move' if action == 'paste' else ''
+        return self._redirect(msg, redirect_to=redirect_to)
 
     def post(self, **kwargs):
         """ POST
@@ -106,8 +116,8 @@ class MoveAsync(BrowserView):
         if 'form.button.Cancel' in kwargs:
             return self._redirect(_(u"Paste cancelled"))
         elif 'form.button.paste' in kwargs:
-            return self.paste()
-        elif not 'form.button.async' in kwargs:
+            return self.original_action()
+        elif 'form.button.async' not in kwargs:
             return self.index()
 
         worker = getUtility(IAsyncService)
@@ -123,15 +133,13 @@ class MoveAsync(BrowserView):
                 email=api.user.get_current().getProperty('email')
             )
             job_id = u64(job._p_oid)
+
             anno = IAnnotations(self.context)
             anno['async_move_job'] = job_id
             portal = getToolByName(self, 'portal_url').getPortalObject()
             portal_anno = IAnnotations(portal)
             if not portal_anno.get('async_move_jobs'):
                 portal_anno['async_move_jobs'] = OOBTree()
-
-            annotation_job = {}
-            portal_anno['async_move_jobs'][job_id] = annotation_job
 
             message_type = 'info'
             message = _(u"Item added to the queue. "
@@ -150,6 +158,70 @@ class MoveAsync(BrowserView):
         if self.request.method.lower() == 'post':
             return self.post(**kwargs)
         return self.index()
+
+
+class RenameAsync(MoveAsync):
+    """ RenameAsync
+    """
+    def post(self, **kwargs):
+        """ POST
+        """
+        newids = self.request.get('new_ids')
+        newtitles = self.request.get('new_titles', '')
+        paths = self.request.get('paths', '')
+        if 'form.button.Cancel' in kwargs:
+            return self._redirect(_(u"Rename cancelled"), redirect_to='')
+        elif 'form.button.rename' in kwargs:
+            return self.original_action(action='rename')
+        elif 'form.button.async_rename' in kwargs:
+            return self.index()
+
+        worker = getUtility(IAsyncService)
+        queue = worker.getQueues()['']
+        email = api.user.get_current().getProperty('email')
+
+        try:
+            job = worker.queueJobInQueue(
+                queue, (ASYNCMOVE_QUEUE,),
+                async_rename,
+                self.context,
+                new_ids=newids,
+                new_titles=newtitles,
+                paths=paths,
+                success_event=AsyncRenameSuccess,
+                fail_event=AsyncRenameFail,
+                email=email
+            )
+            job_id = u64(job._p_oid)
+
+            context = self.context
+            wrapper = IContextWrapper(context)(
+                folder_move_from=context.absolute_url(1),
+                folder_move_to=', '.join(newids),
+                folder_move_objects=', '.join(paths),
+                asyncmove_email=email,
+                async_operation_type='rename',
+                email=email
+            )
+            notify(AsyncOperationAdded(wrapper))
+
+            anno = IAnnotations(self.context)
+            anno['async_move_job'] = job_id
+            portal = getToolByName(self, 'portal_url').getPortalObject()
+            portal_anno = IAnnotations(portal)
+            if not portal_anno.get('async_move_jobs'):
+                portal_anno['async_move_jobs'] = OOBTree()
+
+            message_type = 'info'
+            message = _(u"Item added to the queue. "
+                        u"We will notify you by email at '%s' when the job is "
+                        u"completed" % email)
+        except Exception, err:
+            logger.exception(err)
+            message_type = 'error'
+            message = u"Failed to add items to the sync queue"
+
+        return self._redirect(message, message_type)
 
 
 class MoveAsyncQueueJSON(JobsJSON):
@@ -243,7 +315,7 @@ class MoveAsyncQueueJSON(JobsJSON):
             return ''
 
         for key, progress in progresses.items():
-            title = progress['title']
+            title = progress.get('title', 'MISSING')
             value = progress['progress'] * 100
             detail = JOB_PROGRESS_DETAILS.get(value, '')
             sub_progresses.append(
@@ -313,3 +385,49 @@ jQuery(function($) {
   update();
 });
 """ % {'seconds': timeout/1000, 'timeout': timeout}
+
+
+class ContentRuleCleanup(BrowserView):
+    """ ContentRuleCleanup
+    """
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+
+    def __call__(self):
+        """ Change conditions to use absolute_url instead of request
+        """
+        log = logging
+        log.info("Starting check of content rules tales expression")
+        storage = queryUtility(IRuleStorage)
+        if not storage:
+            return
+        rules = storage.values()
+        result = ["Removing request from content rules tales expressions:"]
+        for rule in rules:
+            conditions = rule.conditions
+            for condition in conditions:
+                if len(condition) > 1:
+                    condition = condition[0]
+                tales = getattr(condition, 'tales_expression', None)
+                if tales:
+                    log.info("%s rule has '%s' tales_expression", rule.id,
+                             tales)
+                    if 'REQUEST.URL' in tales:
+                        condition.tales_expression = tales.replace(
+                            'REQUEST.URL', 'absolute_url()')
+                        wmsg = "'%s' tales_expression changed '%s' --> '%s'" % (
+                                    rule.id, tales, condition.tales_expression)
+                        log.warn(wmsg)
+                        result.append(wmsg)
+        return "\n".join(result)
+
+
+class AsyncQueueLength(BrowserView):
+    """ Current length of queued async operations
+    """
+    def __call__(self):
+        """ call
+        """
+        service = getUtility(IAsyncService)
+        return len(service.getQueues()[''])
