@@ -447,14 +447,15 @@ def async_rename(context, success_event, fail_event, **kwargs):
         _success, failure = renameObjectsByPaths(context, paths,
                                                  newids, newtitles)
         if failure:
-            for oid in failure:
-                if oid in obdict:
-                    del obdict[oid]
+            for obj_path in failure:
+                foid = obj_path.split('/')[-1]
+                if foid in obdict:
+                    del obdict[foid]
                 notify(AsyncMoveSaveProgress(
                     context,
                     operation='sub_progress',
                     job_id=job_id,
-                    obj_id=oid,
+                    obj_id=foid,
                     progress=0.5
                 ))
     except Exception, err:
