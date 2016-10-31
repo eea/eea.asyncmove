@@ -242,7 +242,6 @@ class MoveAsyncQueueJSON(JobsJSON):
 
     def __call__(self):
         self.request.response.setHeader('Content-Type', 'application/json')
-
         jobs = {
             'queued': [],
             'active': [],
@@ -259,6 +258,9 @@ class MoveAsyncQueueJSON(JobsJSON):
                 'progress': self.format_progress(job),
                 'sub_progress': self.format_subprogress(job),
                 'failure': self.format_failure(job),
+                'operation': job.args[-1].__name__.split('_')[1],
+                'user': job.args[-2],
+                'objects': ','.join(job.kwargs.get('path', []))
             })
 
         return json.dumps(jobs)
@@ -297,9 +299,9 @@ class MoveAsyncQueueJSON(JobsJSON):
         if not progress:
             return ''
 
-        return """<div>
-<div class="progress-bar" style="width:%d%%;">&nbsp;</div> %d%% %s</div>""" % (
-            progress, progress, self.format_status(job))
+        return """ <div><div class="progress-bar" style="width:%d%%;">
+                    &nbsp;</div> %d%% %s</div>""" % (progress, progress,
+                                                     self.format_status(job))
 
     def format_subprogress(self, job):
         """ Format sub-progress
@@ -319,11 +321,10 @@ class MoveAsyncQueueJSON(JobsJSON):
             value = progress['progress'] * 100
             detail = JOB_PROGRESS_DETAILS.get(value, '')
             sub_progresses.append(
-                """<div id="%s">
-<div><strong>%s</strong></div>
-<div class="progress-bar" style="width:%d%%;">&nbsp;</div> %d%% %s</div>""" % (
-                key, title, value, value, detail
-            ))
+                """ <div id="%s">
+                    <div><strong>%s</strong></div>
+                    <div class="progress-bar" style="width:%d%%;">&nbsp;</div>
+                    %d%% %s</div> """ % (key, title, value, value, detail))
 
         return ''.join(sub_progresses)
 
@@ -342,12 +343,19 @@ jQuery(function($) {
         return s.replace('<', '&lt;').replace('>', '&gt;');
     }
 
-    $.fn.render = function(data) {
+    $.fn.render = function(data, queue) {
       var rows = ['<caption style="width:100%%;">'];
       rows.push('<div class="portalMessage informationMessage">');
       rows.push('The list is refreshed every %(seconds)s seconds.');
       rows.push('</div></caption>');
-      rows.push('<tr><th>Job</th><th>Status</th></tr>');
+      rows.push('<tr><th>Job</th><th>Status</th><th>By user</th><th>' +
+                'Operation type</th>');
+      if (queue && queue === 'active') {
+        rows.push('<th>Objects</th></tr>');
+      }
+      else {
+        rows.push('</tr>');
+      }
       $(data).each(function(i, job) {
         row = ['<tr><td><div><strong>' + escape(job.callable) +
           '</strong></div>'];
@@ -362,6 +370,21 @@ jQuery(function($) {
         if (job.failure)
           row.push('<div>' + job.failure + '</div>')
         row.push('</td>');
+        if (job.user) {
+          row.push('<td>');
+          row.push(job.user);
+          row.push('</td>');
+        }
+        if (job.operation) {
+          row.push('<td>');
+          row.push(job.operation);
+          row.push('</td>');
+        }
+        if (job.objects && (queue && queue ==='active')) {
+          row.push('<td>');
+          row.push(job.objects);
+          row.push('</td>');
+        }
         rows.push(row.join('') + '</tr>');
       });
       $('table', this).html(rows.join(''));
@@ -375,7 +398,7 @@ jQuery(function($) {
             'ajax_load': new Date().getTime()
         }, function(data) {
       $('#queued-jobs').render(data.queued);
-      $('#active-jobs').render(data.active);
+      $('#active-jobs').render(data.active, queue='active');
       $('#dead-jobs').render(data.dead);
       $('#completed-jobs').render(data.completed);
     });
@@ -383,7 +406,7 @@ jQuery(function($) {
     setTimeout(update, %(timeout)s);
   };
   update();
-});
+  });
 """ % {'seconds': timeout/1000, 'timeout': timeout}
 
 
