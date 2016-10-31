@@ -12,16 +12,17 @@
 
     <script type="text/javascript" tal:content="structure view/js"></script>
     <style type="text/css">
-    div.progress-bar { background: #d0df86; }
-    #active-jobs table,
-    #dead-jobs table,
-    #completed-jobs table,
-    #queued-jobs table{ width: 100%; }
-    #active-jobs table td,
-    #dead-jobs table td,
-    #completed-jobs table td,
-    #queued-jobs table td { vertical-align: middle; }
-    .pre-wrap { white-space: pre-wrap; }
+        div.progress-bar { background: #d0df86; }
+        #active-jobs table,
+        #dead-jobs table,
+        #completed-jobs table,
+        #queued-jobs table{ width: 100%; }
+        #active-jobs table td,
+        #dead-jobs table td,
+        #completed-jobs table td,
+        #queued-jobs table td { vertical-align: middle; }
+        .pre-wrap { white-space: pre-wrap; }
+        .job-item { margin-bottom: 1em; }
     </style>
 
     <h1 class="documentFirstHeading">Async Move Job Queue</h1>

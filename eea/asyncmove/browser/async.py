@@ -299,7 +299,7 @@ class MoveAsyncQueueJSON(JobsJSON):
         if not progress:
             return ''
 
-        return """ <div><div class="progress-bar" style="width:%d%%;">
+        return """ <div class='job-item'><div class="progress-bar" style="width:%d%%;">
                     &nbsp;</div> %d%% %s</div>""" % (progress, progress,
                                                      self.format_status(job))
 
@@ -317,11 +317,11 @@ class MoveAsyncQueueJSON(JobsJSON):
             return ''
 
         for key, progress in progresses.items():
-            title = progress.get('title', 'MISSING')
+            title = progress.get('title', 'id: ' + key)
             value = progress['progress'] * 100
             detail = JOB_PROGRESS_DETAILS.get(value, '')
             sub_progresses.append(
-                """ <div id="%s">
+                """ <div class='job-item' id="%s">
                     <div><strong>%s</strong></div>
                     <div class="progress-bar" style="width:%d%%;">&nbsp;</div>
                     %d%% %s</div> """ % (key, title, value, value, detail))
@@ -357,7 +357,7 @@ jQuery(function($) {
         rows.push('</tr>');
       }
       $(data).each(function(i, job) {
-        row = ['<tr><td><div><strong>' + escape(job.callable) +
+        row = ['<tr><td><div class="job-item"><strong>' + escape(job.callable) +
           '</strong></div>'];
         if (job.sub_progress)
           row.push(job.sub_progress);
