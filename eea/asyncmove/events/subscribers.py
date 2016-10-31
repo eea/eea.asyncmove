@@ -48,8 +48,9 @@ def saveJobProgress(event):
 
     if event.operation == 'initialize':
         annotation_job['sub_progress'] = {}
-        annotation_job['title'] = "Move below objects to %s" % (
-            event.object.absolute_url()
+        operation_type = getattr(event, 'operation_type', 'Moved')
+        annotation_job['title'] = "%s below objects within: %s" % (
+            operation_type, event.object.absolute_url()
         )
 
         for oid, title in event.oblist_id:
