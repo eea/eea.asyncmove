@@ -260,6 +260,7 @@ class MoveAsyncQueueJSON(JobsJSON):
                 'failure': self.format_failure(job),
                 'operation': job.args[-1].__name__.split('_')[1],
                 'user': job.args[-2],
+                'started': self.format_datetime(job.active_start),
                 'objects': '\n '.join(job.kwargs.get('paths', []))
             })
 
@@ -299,7 +300,8 @@ class MoveAsyncQueueJSON(JobsJSON):
         if not progress:
             return ''
 
-        return """ <div class='job-item'><div class="progress-bar" style="width:%d%%;">
+        return """ <div class='job-item'><div class="progress-bar"
+                    style="width:%d%%;">
                     &nbsp;</div> %d%% %s</div>""" % (progress, progress,
                                                      self.format_status(job))
 
@@ -348,8 +350,8 @@ jQuery(function($) {
       rows.push('<div class="portalMessage informationMessage">');
       rows.push('The list is refreshed every %(seconds)s seconds.');
       rows.push('</div></caption>');
-      rows.push('<tr><th>Job</th><th>Status</th><th>By user</th><th>' +
-                'Operation type</th>');
+      rows.push('<tr><th>Job</th><th>Started</th><th>Status</th>' +
+                '<th>By user</th><th>Operation type</th>');
       if (queue && queue === 'active') {
         rows.push('<th>Objects</th></tr>');
       }
@@ -361,6 +363,9 @@ jQuery(function($) {
           '</strong></div>'];
         if (job.sub_progress)
           row.push(job.sub_progress);
+        row.push('</td>');
+        row.push('<td>');
+        row.push(job.started);
         row.push('</td>');
         row.push('<td>');
         if (job.progress)
