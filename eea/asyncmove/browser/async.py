@@ -260,7 +260,7 @@ class MoveAsyncQueueJSON(JobsJSON):
                 'failure': self.format_failure(job),
                 'operation': job.args[-1].__name__.split('_')[1],
                 'user': job.args[-2],
-                'objects': ','.join(job.kwargs.get('path', []))
+                'objects': ','.join(job.kwargs.get('paths', []))
             })
 
         return json.dumps(jobs)
