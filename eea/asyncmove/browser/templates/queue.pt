@@ -21,6 +21,7 @@
     #dead-jobs table td,
     #completed-jobs table td,
     #queued-jobs table td { vertical-align: middle; }
+    .pre-wrap { white-space: pre-wrap; }
     </style>
 
     <h1 class="documentFirstHeading">Async Move Job Queue</h1>

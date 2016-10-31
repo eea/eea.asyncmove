@@ -260,7 +260,7 @@ class MoveAsyncQueueJSON(JobsJSON):
                 'failure': self.format_failure(job),
                 'operation': job.args[-1].__name__.split('_')[1],
                 'user': job.args[-2],
-                'objects': ','.join(job.kwargs.get('paths', []))
+                'objects': '\n '.join(job.kwargs.get('paths', []))
             })
 
         return json.dumps(jobs)
@@ -381,7 +381,7 @@ jQuery(function($) {
           row.push('</td>');
         }
         if (job.objects && (queue && queue ==='active')) {
-          row.push('<td>');
+          row.push('<td class="pre-wrap">');
           row.push(job.objects);
           row.push('</td>');
         }
