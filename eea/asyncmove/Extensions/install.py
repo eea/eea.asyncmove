@@ -35,7 +35,7 @@ def remove_content_rules(portal):
     if not storage:
         return
     ids = ["eea-asyncmove-rule-fail", "eea-asyncmove-rule-success",
-           "eea-asyncmove-rename-rule-fail",
+           "eea-asyncmove-rename-rule-fail", "eea-asyncmove-rule-added",
            "eea-asyncmove-rename-rule-success"]
     for i in ids:
         found = storage.get(i)

@@ -7,30 +7,30 @@
     <interface
         interface="eea.asyncmove.events.interfaces.IAsyncOperationAdded"
         type="plone.contentrules.rule.interfaces.IRuleEventType"
-        name="Async operation (added)"
+        name="Async operation (Added)"
     />
   <interface
     interface="eea.asyncmove.events.interfaces.IAsyncMoveFail"
     type="plone.contentrules.rule.interfaces.IRuleEventType"
-    name="Async Move (fail)"
+    name="Async Move (Fail)"
     />
 
   <interface
     interface="eea.asyncmove.events.interfaces.IAsyncMoveSuccess"
     type="plone.contentrules.rule.interfaces.IRuleEventType"
-    name="Async Move (success)"
+    name="Async Move (Success)"
     />
 
     <interface
         interface="eea.asyncmove.events.interfaces.IAsyncRenameFail"
         type="plone.contentrules.rule.interfaces.IRuleEventType"
-        name="Async Rename (fail)"
+        name="Async Rename (Fail)"
     />
 
     <interface
         interface="eea.asyncmove.events.interfaces.IAsyncRenameSuccess"
         type="plone.contentrules.rule.interfaces.IRuleEventType"
-        name="Async Rename (success)"
+        name="Async Rename (Success)"
     />
 
   <!-- Content rules subscribers -->
